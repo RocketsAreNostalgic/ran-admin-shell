@@ -1,0 +1,38 @@
+{
+	"name": "ran/admin-shell",
+	"description": "Build-time admin-shell resources for Rockets Are Nostalgic WordPress plugins.",
+	"type": "library",
+	"license": "GPL-2.0-or-later",
+	"require": {
+		"php": ">=8.0",
+		"composer-runtime-api": "^2.2",
+		"ext-hash": "*",
+		"ext-json": "*"
+	},
+	"require-dev": {
+		"dealerdirect/phpcodesniffer-composer-installer": "^1.1",
+		"phpcompatibility/php-compatibility": "^9.3",
+		"phpunit/phpunit": "^9.6",
+		"wp-coding-standards/wpcs": "^3.1"
+	},
+	"bin": [
+		"bin/ran-admin-shell"
+	],
+	"scripts": {
+		"phpcs": "phpcs -p",
+		"test": "phpunit --configuration phpunit.xml.dist",
+		"check": [
+			"@test",
+			"@phpcs"
+		]
+	},
+	"config": {
+		"allow-plugins": {
+			"dealerdirect/phpcodesniffer-composer-installer": true
+		},
+		"platform": {
+			"php": "8.0.30"
+		},
+		"sort-packages": true
+	}
+}

@@ -1,0 +1,11 @@
+#!/usr/bin/env php
+<?php
+/**
+ * Synchronize or verify RAN Admin Shell resources.
+ *
+ * @package RAN_Admin_Shell
+ */
+
+require_once dirname( __DIR__ ) . '/tools/SyncCommand.php';
+
+exit( \RAN\AdminShell\Tool\SyncCommand::main( $argv ) );
