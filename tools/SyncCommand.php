@@ -83,7 +83,8 @@ final class SyncCommand {
 		}
 
 		if ( $immutable ) {
-			self::locked_metadata( $config['root'], true );
+			$locked = self::locked_metadata( $config['root'], true );
+			self::assert_installed_metadata( $locked );
 		}
 
 		$expected = (string) json_encode( self::provenance( $config, $resources ), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES ) . "\n";
@@ -228,6 +229,22 @@ final class SyncCommand {
 		}
 
 		throw new \RuntimeException( 'composer.lock does not contain ' . self::PACKAGE_NAME . '.' );
+	}
+
+	/** Require the installed package to match the immutable lock reference. */
+	private static function assert_installed_metadata( array $locked ) {
+		if ( ! class_exists( '\\Composer\\InstalledVersions' ) || ! \Composer\InstalledVersions::isInstalled( self::PACKAGE_NAME ) ) {
+			throw new \RuntimeException( 'Immutable verification requires Composer installed metadata.' );
+		}
+
+		$installed_reference = (string) \Composer\InstalledVersions::getReference( self::PACKAGE_NAME );
+		$install_path        = (string) \Composer\InstalledVersions::getInstallPath( self::PACKAGE_NAME );
+		if ( '' === $install_path || is_link( $install_path ) ) {
+			throw new \RuntimeException( 'Immutable verification rejects linked or unknown package installs.' );
+		}
+		if ( ! hash_equals( strtolower( $locked['reference'] ), strtolower( $installed_reference ) ) ) {
+			throw new \RuntimeException( 'Installed package reference does not match composer.lock.' );
+		}
 	}
 
 	/** Atomically copy one resource. */

@@ -6,6 +6,10 @@
  * @package RAN_Admin_Shell
  */
 
+if ( isset( $_composer_autoload_path ) && is_string( $_composer_autoload_path ) ) {
+	require_once $_composer_autoload_path;
+}
+
 require_once dirname( __DIR__ ) . '/tools/SyncCommand.php';
 
 exit( \RAN\AdminShell\Tool\SyncCommand::main( $argv ) );

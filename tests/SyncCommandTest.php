@@ -49,13 +49,23 @@ final class SyncCommandTest extends TestCase {
 		$config = $this->load_configuration();
 		SyncCommand::sync( $config );
 
-		$this->assertTrue( SyncCommand::check( $config, true ) );
+		$this->assertTrue( SyncCommand::check( $config, false ) );
 		$first = file_get_contents( $config['provenance'] );
 		SyncCommand::sync( $config );
 		$this->assertSame( $first, file_get_contents( $config['provenance'] ) );
 
 		file_put_contents( $config['css'], 'drift', FILE_APPEND );
 		$this->assertFalse( SyncCommand::check( $config, false ) );
+	}
+
+	/** Immutable mode requires matching Composer installed metadata. */
+	public function test_immutable_check_rejects_missing_installed_metadata() {
+		$config = $this->load_configuration();
+		SyncCommand::sync( $config );
+
+		$this->expectException( RuntimeException::class );
+		$this->expectExceptionMessage( 'does not match composer.lock' );
+		SyncCommand::check( $config, true );
 	}
 
 	/** CLI rejects path traversal. */
