@@ -18,6 +18,7 @@ return array(
 		'navigation'       => array(
 			array( 'label' => 'Overview', 'url' => '#', 'current' => true ),
 			array( 'label' => 'Settings', 'url' => '#' ),
+			array( 'label' => 'Other', 'url' => '#' ),
 		),
 		'actions'          => array(
 			array( 'label' => 'Documentation', 'url' => '#' ),

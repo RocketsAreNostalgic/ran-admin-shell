@@ -27,3 +27,36 @@ start padding using a logical margin, while `overflow: clip` lets the native
 Screen Options and Help controls float over the background without narrowing
 the header surface. The consumer must keep `#screen-meta-links` above the shell
 in its exact-screen stylesheet.
+
+## Optional navigation scaffold
+
+Navigation is an ordered consumer-owned array. Nothing is rendered when the
+array is absent or empty. Consumers can append an optional catch-all tab only
+when they have a real destination for it:
+
+```php
+$navigation = array(
+	array(
+		'label'   => __( 'Overview', 'consumer-text-domain' ),
+		'url'     => $overview_url,
+		'current' => true,
+	),
+);
+
+if ( $other_url ) {
+	$navigation[] = array(
+		'label' => __( 'Other', 'consumer-text-domain' ),
+		'url'   => $other_url,
+	);
+}
+
+$ran_admin_shell = array(
+	'name'             => __( 'RAN Example', 'consumer-text-domain' ),
+	'navigation_label' => __( 'Plugin sections', 'consumer-text-domain' ),
+	'navigation'       => $navigation,
+);
+```
+
+The consumer owns the labels, URLs, current-page decision and permissions. The
+shell only validates and renders supplied items, and marks at most one item as
+current.
