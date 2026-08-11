@@ -22,6 +22,8 @@ The package and `vendor/` stay out of installed WordPress sites.
 
 For a full-width admin header, render the synchronized shell before the
 consumer's `.wrap`; keep notices, forms and page content inside `.wrap`.
-`overflow: clip` lets WordPress's native Screen Options and Help controls float
-over the shell background without narrowing the header surface. The consumer
-must keep `#screen-meta-links` above the shell in its exact-screen stylesheet.
+The shell offsets WordPress's 20px desktop and 10px responsive `#wpcontent`
+start padding using a logical margin, while `overflow: clip` lets the native
+Screen Options and Help controls float over the background without narrowing
+the header surface. The consumer must keep `#screen-meta-links` above the shell
+in its exact-screen stylesheet.
