@@ -19,3 +19,9 @@ vendor/bin/ran-admin-shell check --config=ran-admin-shell.json --immutable
 ```
 
 The package and `vendor/` stay out of installed WordPress sites.
+
+For a full-width admin header, render the synchronized shell before the
+consumer's `.wrap`; keep notices, forms and page content inside `.wrap`.
+`overflow: clip` lets WordPress's native Screen Options and Help controls float
+over the shell background without narrowing the header surface. The consumer
+must keep `#screen-meta-links` above the shell in its exact-screen stylesheet.
