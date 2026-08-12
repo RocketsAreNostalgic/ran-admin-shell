@@ -50,6 +50,10 @@ final class SyncCommandTest extends TestCase {
 		SyncCommand::sync( $config );
 
 		$this->assertTrue( SyncCommand::check( $config, false ) );
+		$this->assertStringContainsString(
+			"if ( ! defined( 'ABSPATH' ) ) {\n\texit;\n}",
+			(string) file_get_contents( $config['php'] )
+		);
 		$first = file_get_contents( $config['provenance'] );
 		SyncCommand::sync( $config );
 		$this->assertSame( $first, file_get_contents( $config['provenance'] ) );

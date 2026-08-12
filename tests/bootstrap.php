@@ -1,6 +1,10 @@
 <?php
 /** Test bootstrap. */
 
+if ( ! defined( 'ABSPATH' ) ) {
+	define( 'ABSPATH', dirname( __DIR__ ) . '/' );
+}
+
 if ( ! function_exists( 'esc_html' ) ) {
 	function esc_html( $value ) {
 		return htmlspecialchars( (string) $value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8' );
