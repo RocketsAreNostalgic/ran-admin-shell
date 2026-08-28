@@ -7,7 +7,7 @@ return array(
 	),
 	'turnstile'            => array(
 		'name'      => 'RAN Turnstile for Jetpack Forms',
-		'strapline' => 'Protect every Jetpack form on this site with Cloudflare Turnstile.',
+		'strapline' => 'Protect your Jetpack forms with Cloudflare Turnstile.',
 	),
 	'all-passive-options'  => array(
 		'name'             => 'RAN Example Plugin',
