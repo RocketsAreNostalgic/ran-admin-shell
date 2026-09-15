@@ -24,3 +24,14 @@ jobs:
       - run: composer install --no-interaction --prefer-dist
       - run: composer validate --strict
       - run: composer check
+
+  quality:
+    name: quality
+    if: ${{ always() }}
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require all PHP lanes
+        env:
+          TEST_RESULT: ${{ needs.test.result }}
+        run: test "$TEST_RESULT" = success
