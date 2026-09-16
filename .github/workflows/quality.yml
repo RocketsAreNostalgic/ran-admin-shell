@@ -7,31 +7,21 @@ permissions:
   contents: read
 
 jobs:
-  test:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        php:
-          - "8.0"
-          - "8.3"
-    steps:
-      - uses: actions/checkout@v4
-      - uses: shivammathur/setup-php@v2
-        with:
-          php-version: ${{ matrix.php }}
-          coverage: none
-          tools: composer:v2
-      - run: composer install --no-interaction --prefer-dist
-      - run: composer validate --strict
-      - run: composer check
+  baseline:
+    uses: RocketsAreNostalgic/.github/.github/workflows/quality-php-library-v2.yml@788f783d2998994f7aab9691710911ed1bd762c9
+    with:
+      php-floor: '8.0'
+      php-current: '8.5'
+      php-extensions: zip
+      node-version: ''
 
   quality:
     name: quality
     if: ${{ always() }}
-    needs: test
+    needs: baseline
     runs-on: ubuntu-latest
     steps:
-      - name: Require all PHP lanes
+      - name: Require normalized PHP quality baseline
         env:
-          TEST_RESULT: ${{ needs.test.result }}
-        run: test "$TEST_RESULT" = success
+          BASELINE_RESULT: ${{ needs.baseline.result }}
+        run: test "$BASELINE_RESULT" = success
