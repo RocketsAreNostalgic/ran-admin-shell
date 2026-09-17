@@ -21,7 +21,10 @@
 	"scripts": {
 		"phpcs": "phpcs -p",
 		"test": "phpunit --configuration phpunit.xml.dist",
-		"check": "true"
+		"check": [
+			"@test",
+			"@phpcs"
+		]
 	},
 	"config": {
 		"allow-plugins": {
