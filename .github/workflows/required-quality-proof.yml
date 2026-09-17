@@ -8,4 +8,4 @@ permissions:
 
 jobs:
   required-quality:
-    uses: RocketsAreNostalgic/.github/.github/workflows/required-quality-php-library.yml@49284adecffaa4f55ec49bd728fbffd49542fc7d
+    uses: RocketsAreNostalgic/.github/.github/workflows/required-quality-php-library.yml@b03d81893cfd6f3fd54941ea409533a670e35a4f
