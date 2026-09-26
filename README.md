@@ -65,7 +65,7 @@ current.
 
 Install the tracked dependencies with `composer install`, then run
 `composer check`. The aggregate runs the independent syntax sweep, standards
-check and existing render/synchronization tests, in that order.
+check, static analysis and existing render/synchronization tests, in that order.
 
 - `composer lint:syntax` parses PHP in `resources/`, `tools/`, `tests/` and
   `fixtures/`, plus the extensionless `bin/ran-admin-shell` entrypoint. Missing
@@ -105,6 +105,9 @@ then remains byte-stable. The fixture rule does not alter production policy.
 
 `composer analyze` runs locked PHPStan at blocking level 5 with a PHP 8.0
 language target and a 512 MB memory limit; `composer check` includes it.
+The analyzer runs with `register_argc_argv=1` to model the CLI argument
+environment consistently across PHP installations; this is scoped to the
+analysis process and does not change consumer configuration.
 Direct analysis covers the extensionless CLI, `resources/admin-shell.php` and
 all PHP in `tools/`. WordPress 6.5-generation stubs and PHPCS source provide
 symbol discovery only; dependency bodies are not first-party analysis roots.
