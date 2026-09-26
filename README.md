@@ -105,9 +105,9 @@ then remains byte-stable. The fixture rule does not alter production policy.
 
 `composer analyze` runs locked PHPStan at blocking level 5 with a PHP 8.0
 language target and a 512 MB memory limit; `composer check` includes it.
-The analyzer runs with `register_argc_argv=1` to model the CLI argument
-environment consistently across PHP installations; this is scoped to the
-analysis process and does not change consumer configuration.
+The CLI requires registered command-line arguments and exits with a clear
+diagnostic if `$argv` is unavailable (for example, when `register_argc_argv`
+is disabled), rather than passing an undefined variable into the sync command.
 Direct analysis covers the extensionless CLI, `resources/admin-shell.php` and
 all PHP in `tools/`. WordPress 6.5-generation stubs and PHPCS source provide
 symbol discovery only; dependency bodies are not first-party analysis roots.
@@ -122,4 +122,4 @@ No baseline or ignored PHPStan errors are introduced.
 The initial level-6 probe reported 28 missing parameter/return/iterable-value
 type declarations in `tools/SyncCommand.php`. Accurate contract typing and any
 subsequent level increase remain a separately reviewed follow-up under #13;
-this first adoption changes no runtime or renderer bytes.
+the renderer and synchronization implementation remain unchanged.

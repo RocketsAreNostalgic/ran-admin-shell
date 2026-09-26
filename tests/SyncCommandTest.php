@@ -82,6 +82,20 @@ final class SyncCommandTest extends TestCase {
 		$this->assertSame( 2, SyncCommand::main( array( 'ran-admin-shell', 'check', '--config=' . $this->root . '/unsafe.json' ) ) );
 	}
 
+	/** Disabled argument registration produces an intentional failure, not an undefined-variable error. */
+	public function test_cli_rejects_unavailable_arguments(): void {
+		$log = $this->root . '/cli.log';
+		$process = proc_open(
+			array( PHP_BINARY, '-d', 'register_argc_argv=0', dirname( __DIR__ ) . '/bin/ran-admin-shell', 'check' ),
+			array( array( 'pipe', 'r' ), array( 'file', $log, 'w' ), array( 'file', $log, 'a' ) ),
+			$pipes
+		);
+		$this->assertIsResource( $process );
+		fclose( $pipes[0] );
+		$this->assertSame( 2, proc_close( $process ) );
+		$this->assertSame( "RAN Admin Shell requires registered CLI arguments (register_argc_argv).\n", file_get_contents( $log ) );
+	}
+
 	/** Load a valid configuration through the public command seam. */
 	private function load_configuration() {
 		return SyncCommand::load_configuration( $this->root . '/ran-admin-shell.json' );
