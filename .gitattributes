@@ -7,3 +7,4 @@
 /phpunit.xml.dist export-ignore
 
 /phpcs-tooling.xml.dist export-ignore
+/phpstan.neon.dist export-ignore

@@ -11,9 +11,11 @@
 	},
 	"require-dev": {
 		"dealerdirect/phpcodesniffer-composer-installer": "^1.1",
+		"php-stubs/wordpress-stubs": "~6.5.0",
 		"phpcompatibility/php-compatibility": "10.0.0-alpha2",
 		"phpcompatibility/phpcompatibility-paragonie": "2.0.0-alpha2",
 		"phpcompatibility/phpcompatibility-wp": "3.0.0-alpha2",
+		"phpstan/phpstan": "^2.1",
 		"phpunit/phpunit": "^9.6",
 		"ran/coding-standards": "^1.0"
 	},
@@ -31,8 +33,10 @@
 		"check": [
 			"@lint:syntax",
 			"@standards",
+			"@analyze",
 			"@test"
-		]
+		],
+		"analyze": "@php vendor/bin/phpstan analyse --configuration=phpstan.neon.dist --no-progress --memory-limit=512M"
 	},
 	"config": {
 		"allow-plugins": {

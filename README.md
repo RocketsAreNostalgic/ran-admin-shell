@@ -100,3 +100,23 @@ successful fixes in the first.
 layout: incompatible CLI code must fail, an unrelated extensionless file stays
 excluded, and a fixture-only fixable rule proves the same CLI is fixed once and
 then remains byte-stable. The fixture rule does not alter production policy.
+
+### Static analysis
+
+`composer analyze` runs locked PHPStan at blocking level 5 with a PHP 8.0
+language target and a 512 MB memory limit; `composer check` includes it.
+Direct analysis covers the extensionless CLI, `resources/admin-shell.php` and
+all PHP in `tools/`. WordPress 6.5-generation stubs and PHPCS source provide
+symbol discovery only; dependency bodies are not first-party analysis roots.
+The stubs describe APIs, not proof of an installed WordPress runtime.
+
+Tests remain under syntax, compatibility and PHPUnit gates; preview fixtures
+remain under syntax checks. Neither is counted as maintained production
+analysis coverage. Consumer-owned synchronized copies are verified through
+existing render/sync/provenance tests rather than scanned in sibling checkouts.
+No baseline or ignored PHPStan errors are introduced.
+
+The initial level-6 probe reported 28 missing parameter/return/iterable-value
+type declarations in `tools/SyncCommand.php`. Accurate contract typing and any
+subsequent level increase remain a separately reviewed follow-up under #13;
+this first adoption changes no runtime or renderer bytes.

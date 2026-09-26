@@ -1,0 +1,12 @@
+parameters:
+    level: 5
+    phpVersion: 80000
+    paths:
+        - bin/ran-admin-shell
+        - resources/admin-shell.php
+        - tools
+    scanFiles:
+        - vendor/php-stubs/wordpress-stubs/wordpress-stubs.php
+    scanDirectories:
+        - vendor/squizlabs/php_codesniffer/src
+    tmpDir: .phpstan-cache
