@@ -82,11 +82,13 @@ final class SyncCommandTest extends TestCase {
 		$this->assertSame( 2, SyncCommand::main( array( 'ran-admin-shell', 'check', '--config=' . $this->root . '/unsafe.json' ) ) );
 	}
 
-	/** Disabled argument registration produces an intentional failure, not an undefined-variable error. */
+	/** Missing CLI arguments produce an intentional failure, not an undefined-variable error. */
 	public function test_cli_rejects_unavailable_arguments(): void {
 		$log = $this->root . '/cli.log';
+		$wrapper = $this->root . '/without-argv.php';
+		file_put_contents( $wrapper, '<?php unset($argv); require ' . var_export( dirname( __DIR__ ) . '/bin/ran-admin-shell', true ) . ';' );
 		$process = proc_open(
-			array( PHP_BINARY, '-d', 'register_argc_argv=0', dirname( __DIR__ ) . '/bin/ran-admin-shell', 'check' ),
+			array( PHP_BINARY, $wrapper ),
 			array( array( 'pipe', 'r' ), array( 'file', $log, 'w' ), array( 'file', $log, 'a' ) ),
 			$pipes
 		);
