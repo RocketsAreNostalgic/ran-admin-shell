@@ -60,3 +60,25 @@ $ran_admin_shell = array(
 The consumer owns the labels, URLs, current-page decision and permissions. The
 shell only validates and renders supplied items, and marks at most one item as
 current.
+
+## Development quality commands
+
+Install the tracked dependencies with `composer install`, then run
+`composer check`. The aggregate runs the independent syntax sweep, standards
+check and existing render/synchronization tests, in that order.
+
+- `composer lint:syntax` parses PHP in `resources/`, `tools/`, `tests/` and
+  `fixtures/`, plus the extensionless `bin/ran-admin-shell` entrypoint. Missing
+  required roots or entrypoint and parser failures fail the command. It does
+  not execute the selected source or inspect dependency directories.
+- `composer standards` runs PHPCS; `composer standards:fix` runs PHPCBF against
+  the same rules and paths. These replace the former `composer phpcs` command.
+- `composer test` runs PHPUnit, including render, immutable synchronization
+  and syntax-sweep failure contracts.
+
+Standards retain the existing distinction: WordPress-Extra applies to shipped
+resources; PHPCompatibility applies to resources, tools, tests and the CLI.
+The preview fixtures receive syntax coverage without new style enforcement.
+PHP 8.0 remains the supported floor; CI also runs the aggregate on PHP 8.5.
+Shared RAN-standard adoption and static analysis remain tracked in issue #13;
+these commands do not claim those later migrations are complete.

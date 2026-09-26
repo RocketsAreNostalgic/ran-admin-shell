@@ -19,11 +19,14 @@
 		"bin/ran-admin-shell"
 	],
 	"scripts": {
-		"phpcs": "phpcs -p",
+		"lint:syntax": "@php tools/lint-syntax.php",
+		"standards": "phpcs -p",
+		"standards:fix": "phpcbf",
 		"test": "phpunit --configuration phpunit.xml.dist",
 		"check": [
-			"@test",
-			"@phpcs"
+			"@lint:syntax",
+			"@standards",
+			"@test"
 		]
 	},
 	"config": {
