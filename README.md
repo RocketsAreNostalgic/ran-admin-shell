@@ -76,9 +76,27 @@ check and existing render/synchronization tests, in that order.
 - `composer test` runs PHPUnit, including render, immutable synchronization
   and syntax-sweep failure contracts.
 
-Standards retain the existing distinction: WordPress-Extra applies to shipped
-resources; PHPCompatibility applies to resources, tools, tests and the CLI.
+Standards consume published `ran/coding-standards` v1 through
+`RANWordPressLibrary` for shipped resources and `RAN` for standalone tooling.
+The existing distinction remains: WordPress rules apply to resources, while
+PHPCompatibilityWP applies to resources and full PHPCompatibility applies to
+standalone tools, tests and the CLI. Separate rulesets prevent WordPress
+polyfill exclusions from leaking into standalone checks. Both `standards` and
+`standards:fix` run the resource and tooling rulesets in the same order. PHP support and the
+WordPress floor remain local settings.
 The preview fixtures receive syntax coverage without new style enforcement.
 PHP 8.0 remains the supported floor; CI also runs the aggregate on PHP 8.5.
-Shared RAN-standard adoption and static analysis remain tracked in issue #13;
-these commands do not claim those later migrations are complete.
+The compatibility packages are explicitly root-pinned to the shared profile's
+reviewed alpha generation (PHPCompatibility 10 / WP 3 / Paragonie 2); Composer
+stability remains unchanged for other dependencies. Upgrades require a reviewed
+lock update and PHP-floor/current CI. No owned-method naming enforcement is
+implicitly enabled by this adoption. Static analysis remains tracked in #13.
+
+`standards:fix` preserves PHPCBF exit semantics (0 unchanged, 1 successfully
+fixed, greater than 1 failure) while continuing to the second scope after
+successful fixes in the first.
+
+`composer test` also runs the real PHPCS/PHPCBF binaries in a temporary fixture
+layout: incompatible CLI code must fail, an unrelated extensionless file stays
+excluded, and a fixture-only fixable rule proves the same CLI is fixed once and
+then remains byte-stable. The fixture rule does not alter production policy.

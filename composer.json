@@ -11,17 +11,22 @@
 	},
 	"require-dev": {
 		"dealerdirect/phpcodesniffer-composer-installer": "^1.1",
-		"phpcompatibility/php-compatibility": "^9.3",
+		"phpcompatibility/php-compatibility": "10.0.0-alpha2",
+		"phpcompatibility/phpcompatibility-paragonie": "2.0.0-alpha2",
+		"phpcompatibility/phpcompatibility-wp": "3.0.0-alpha2",
 		"phpunit/phpunit": "^9.6",
-		"wp-coding-standards/wpcs": "^3.1"
+		"ran/coding-standards": "^1.0"
 	},
 	"bin": [
 		"bin/ran-admin-shell"
 	],
 	"scripts": {
 		"lint:syntax": "@php tools/lint-syntax.php",
-		"standards": "phpcs -p",
-		"standards:fix": "phpcbf",
+		"standards": [
+			"phpcs -p",
+			"phpcs --standard=phpcs-tooling.xml.dist -p"
+		],
+		"standards:fix": "@php tools/fix-standards.php",
 		"test": "phpunit --configuration phpunit.xml.dist",
 		"check": [
 			"@lint:syntax",
@@ -37,5 +42,11 @@
 			"php": "8.0.30"
 		},
 		"sort-packages": true
-	}
+	},
+	"repositories": [
+		{
+			"type": "vcs",
+			"url": "https://github.com/RocketsAreNostalgic/ran-coding-standards"
+		}
+	]
 }
