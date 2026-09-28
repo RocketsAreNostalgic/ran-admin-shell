@@ -52,6 +52,19 @@ final class DistributionContractTest extends TestCase {
 		$composer = getenv( 'COMPOSER_BINARY' ) ?: 'composer';
 		list( $status, $output ) = $this->run_command( array( $composer, 'update', '--no-interaction', '--no-progress', '--no-plugins', '--no-scripts', '--prefer-dist' ), $consumer );
 		$this->assertSame( 0, $status, $output );
+		$installed = json_decode( file_get_contents( $consumer . '/vendor/composer/installed.json' ), true, 512, JSON_THROW_ON_ERROR );
+		$this->assertCount( 1, $installed['packages'] );
+		$this->assertSame( 'dist', $installed['packages'][0]['installation-source'] );
+		$this->assertDirectoryDoesNotExist( $consumer . '/vendor/ran/admin-shell/tests' );
+		$this->assertDirectoryDoesNotExist( $consumer . '/vendor/ran/admin-shell/.git' );
+		$this->assertTrue( $zip->open( $archive ) );
+		for ( $index = 0; $index < $zip->numFiles; ++$index ) {
+			$path = $zip->getNameIndex( $index );
+			if ( '/' !== substr( $path, -1 ) ) {
+				$this->assertSame( $zip->getFromIndex( $index ), file_get_contents( $consumer . '/vendor/ran/admin-shell/' . $path ), $path );
+			}
+		}
+		$zip->close();
 		$this->assertDirectoryDoesNotExist( $consumer . '/vendor/phpstan' );
 		$this->assertDirectoryDoesNotExist( $consumer . '/vendor/phpunit' );
 		$this->assertFalse( is_link( $consumer . '/vendor/ran/admin-shell' ) );
