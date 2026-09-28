@@ -123,3 +123,23 @@ The initial level-6 probe reported 28 missing parameter/return/iterable-value
 type declarations in `tools/SyncCommand.php`. Accurate contract typing and any
 subsequent level increase remain a separately reviewed follow-up under #13;
 the renderer and synchronization implementation remain unchanged.
+
+### Package distribution acceptance
+
+The ordinary test suite exports committed `HEAD` with `git archive`, checks the
+package boundary and installs that exact ZIP into an isolated Composer consumer.
+It uses a local package repository with Packagist disabled; no package is
+published and no real consumer lock is changed. Git, Composer and the ZIP
+extension are required alongside PHP (the existing PHP 8.0/8.5 CI provides them).
+Commit export-affecting edits before running this proof: it tests the committed
+archive, not uncommitted working-tree bytes.
+
+The real Composer binary proxy must synchronize resources, pass immutable
+verification against installed metadata, retain byte-stable provenance on repeat
+sync, reject resource drift and reject a mismatched locked source reference.
+A production-only Composer install then removes the development package while
+preserving the consumer-owned PHP, CSS and provenance bytes. Package development
+dependencies, test/configuration trees and workflows are not installed with the
+export. Each actual plugin still owns its archive allowlist and must exclude
+`vendor/` and this build-time package from its release ZIP. This isolated fixture
+does not claim installed WordPress or interactive UI acceptance.
