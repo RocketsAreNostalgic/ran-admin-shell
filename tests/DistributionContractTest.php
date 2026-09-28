@@ -38,7 +38,11 @@ final class DistributionContractTest extends TestCase {
 		}
 		$package = json_decode( $zip->getFromName( 'composer.json' ), true, 512, JSON_THROW_ON_ERROR );
 		$zip->close();
-		$package = array_intersect_key( $package, array_flip( array( 'name', 'description', 'type', 'license', 'require', 'bin' ) ) );
+		// Build-time resources must never acquire Composer runtime loading.
+		foreach ( array( 'autoload', 'include-path', 'target-dir' ) as $field ) {
+			$this->assertArrayNotHasKey( $field, $package, $field );
+		}
+		$this->assertSame( 'library', $package['type'] );
 		$package['version'] = 'dev-acceptance';
 		$package['source'] = array( 'type' => 'git', 'url' => $repository, 'reference' => $reference );
 		$package['dist'] = array( 'type' => 'zip', 'url' => 'file://' . $archive, 'reference' => $reference, 'shasum' => sha1_file( $archive ) );
