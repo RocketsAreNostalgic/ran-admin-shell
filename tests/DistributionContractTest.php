@@ -33,7 +33,7 @@ final class DistributionContractTest extends TestCase {
 		foreach ( array( 'bin/ran-admin-shell', 'tools/SyncCommand.php', 'resources/admin-shell.php', 'resources/admin-shell.css', 'LICENSE', 'composer.json' ) as $path ) {
 			$this->assertNotFalse( $zip->locateName( $path ), $path );
 		}
-		foreach ( array( 'tests/', 'fixtures/', 'docs/', '.github/', 'vendor/', 'phpcs.xml.dist', 'phpcs-tooling.xml.dist', 'phpstan.neon.dist', 'phpunit.xml.dist' ) as $path ) {
+		foreach ( array( 'tests/', 'fixtures/', 'docs/', '.github/', '.agents/', 'AGENTS.md', 'vendor/', 'phpcs.xml.dist', 'phpcs-tooling.xml.dist', 'phpstan.neon.dist', 'phpunit.xml.dist' ) as $path ) {
 			$this->assertFalse( $zip->locateName( $path ), $path );
 		}
 		$package = json_decode( $zip->getFromName( 'composer.json' ), true, 512, JSON_THROW_ON_ERROR );
@@ -57,6 +57,8 @@ final class DistributionContractTest extends TestCase {
 		$this->assertSame( 'dist', $installed['packages'][0]['installation-source'] );
 		$this->assertDirectoryDoesNotExist( $consumer . '/vendor/ran/admin-shell/tests' );
 		$this->assertDirectoryDoesNotExist( $consumer . '/vendor/ran/admin-shell/.git' );
+		$this->assertDirectoryDoesNotExist( $consumer . '/vendor/ran/admin-shell/.agents' );
+		$this->assertFileDoesNotExist( $consumer . '/vendor/ran/admin-shell/AGENTS.md' );
 		$this->assertTrue( $zip->open( $archive ) );
 		for ( $index = 0; $index < $zip->numFiles; ++$index ) {
 			$path = $zip->getNameIndex( $index );
