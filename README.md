@@ -65,7 +65,7 @@ current.
 
 Install the tracked dependencies with `composer install`, then run
 `composer check`. The aggregate runs the independent syntax sweep, standards
-check and existing render/synchronization tests, in that order.
+check, static analysis and existing render/synchronization tests, in that order.
 
 - `composer lint:syntax` parses PHP in `resources/`, `tools/`, `tests/` and
   `fixtures/`, plus the extensionless `bin/ran-admin-shell` entrypoint. Missing
@@ -100,3 +100,26 @@ successful fixes in the first.
 layout: incompatible CLI code must fail, an unrelated extensionless file stays
 excluded, and a fixture-only fixable rule proves the same CLI is fixed once and
 then remains byte-stable. The fixture rule does not alter production policy.
+
+### Static analysis
+
+`composer analyze` runs locked PHPStan at blocking level 5 with a PHP 8.0
+language target and a 512 MB memory limit; `composer check` includes it.
+The CLI requires registered command-line arguments and exits with a clear
+diagnostic if `$argv` is unavailable (for example, when `register_argc_argv`
+is disabled), rather than passing an undefined variable into the sync command.
+Direct analysis covers the extensionless CLI, `resources/admin-shell.php` and
+all PHP in `tools/`. WordPress 6.5-generation stubs and PHPCS source provide
+symbol discovery only; dependency bodies are not first-party analysis roots.
+The stubs describe APIs, not proof of an installed WordPress runtime.
+
+Tests remain under syntax, compatibility and PHPUnit gates; preview fixtures
+remain under syntax checks. Neither is counted as maintained production
+analysis coverage. Consumer-owned synchronized copies are verified through
+existing render/sync/provenance tests rather than scanned in sibling checkouts.
+No baseline or ignored PHPStan errors are introduced.
+
+The initial level-6 probe reported 28 missing parameter/return/iterable-value
+type declarations in `tools/SyncCommand.php`. Accurate contract typing and any
+subsequent level increase remain a separately reviewed follow-up under #13;
+the renderer and synchronization implementation remain unchanged.

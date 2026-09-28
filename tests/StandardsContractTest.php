@@ -35,6 +35,14 @@ final class StandardsContractTest extends TestCase {
 		$this->assertStringContainsString( 'PHPCompatibility.FunctionUse.RemovedFunctions', $output );
 	}
 
+	public function test_configured_paths_discover_incompatible_cli_without_cli_path_arguments(): void {
+		file_put_contents( $this->root . '/bin/ran-admin-shell', '<?php each( array() );' );
+		list( $status, $output ) = $this->run_standard( 'phpcs', false );
+		$this->assertNotSame( 0, $status );
+		$this->assertStringContainsString( 'bin/ran-admin-shell', $output );
+		$this->assertStringContainsString( 'PHPCompatibility.FunctionUse.RemovedFunctions', $output );
+	}
+
 	public function test_standalone_cli_cannot_rely_on_wordpress_polyfills(): void {
 		file_put_contents( $this->root . '/bin/ran-admin-shell', '<?php array_is_list( array() );' );
 		list( $status, $output ) = $this->run_standard( 'phpcs' );
@@ -83,9 +91,12 @@ final class StandardsContractTest extends TestCase {
 		$this->assertNotSame( $source, file_get_contents( $this->root . '/bin/ran-admin-shell' ) );
 	}
 
-	private function run_standard( $binary ): array {
+	private function run_standard( $binary, $explicit_paths = true ): array {
 		// Explicit bin directory also proves that the custom filter is not an extensionless wildcard.
-		$command = array( PHP_BINARY, dirname( __DIR__ ) . '/vendor/bin/' . $binary, '--standard=phpcs.xml.dist', '-s', 'bin', 'tools' );
+		$command = array( PHP_BINARY, dirname( __DIR__ ) . '/vendor/bin/' . $binary, '--standard=phpcs.xml.dist', '-s' );
+		if ( $explicit_paths ) {
+			$command = array_merge( $command, array( 'bin', 'tools' ) );
+		}
 		$log = $this->root . '/output.log';
 		$process = proc_open( $command, array( array( 'pipe', 'r' ), array( 'file', $log, 'w' ), array( 'file', $log, 'a' ) ), $pipes, $this->root );
 		$this->assertIsResource( $process );
