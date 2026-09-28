@@ -1,5 +1,7 @@
 * text=auto eol=lf
 /.github export-ignore
+/.agents export-ignore
+/AGENTS.md export-ignore
 /docs export-ignore
 /fixtures export-ignore
 /tests export-ignore
