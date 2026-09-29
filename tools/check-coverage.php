@@ -5,7 +5,7 @@ $root = dirname( __DIR__ );
 
 try {
 	$analysis = file_get_contents( $root . '/phpstan.neon.dist' );
-	if ( false === $analysis || preg_match( '/^\s*excludePaths\s*:/m', $analysis ) ) {
+	if ( false === $analysis || preg_match( '/^\s*(excludePaths|includes)\s*:/m', $analysis ) ) {
 		throw new RuntimeException( 'PHPStan coverage configuration is missing or needs review.' );
 	}
 	if ( ! preg_match( '/^([ \t]*)paths:[ \t]*$/m', $analysis, $match, PREG_OFFSET_CAPTURE ) ) {
@@ -68,11 +68,15 @@ try {
 	} );
 	foreach ( new RecursiveIteratorIterator( $filter ) as $file ) {
 		if ( $file->isFile() && 'php' === $file->getExtension() ) {
-			$maintained[] = substr( $file->getPathname(), strlen( $root ) + 1 );
+			$maintained[] = str_replace( '\\', '/', substr( $file->getPathname(), strlen( $root ) + 1 ) );
 		}
 	}
 	$manifest = json_decode( file_get_contents( $root . '/composer.json' ), true, 512, JSON_THROW_ON_ERROR );
 	foreach ( $manifest['bin'] ?? array() as $command ) {
+		// StandardsFilter.php selects only this extensionless entrypoint.
+		if ( 'bin/ran-admin-shell' !== $command ) {
+			throw new RuntimeException( 'PHPCS extensionless CLI filter needs review: ' . $command );
+		}
 		$maintained[] = $command;
 	}
 	$maintained = array_unique( $maintained );
@@ -103,12 +107,19 @@ try {
 
 /** A directory covers descendants, while a file covers only itself. */
 function covered_by( $path, array $roots, $repository ) {
+	$canonical_root = realpath( $repository );
+	if ( false === $canonical_root ) {
+		throw new RuntimeException( 'Quality repository root is missing.' );
+	}
+	$normalized_root = str_replace( '\\', '/', $canonical_root );
 	foreach ( $roots as $scope ) {
 		$location = realpath( $repository . '/' . $scope );
-		if ( false === $location || 0 !== strpos( $location, $repository . '/' ) ) {
+		$normalized_location = false === $location ? false : str_replace( '\\', '/', $location );
+		$position = false === $normalized_location ? false : ( '\\' === DIRECTORY_SEPARATOR ? stripos( $normalized_location, $normalized_root . '/' ) : strpos( $normalized_location, $normalized_root . '/' ) );
+		if ( 0 !== $position ) {
 			throw new RuntimeException( 'Quality source scope is missing or outside the repository: ' . $scope );
 		}
-		$relative = substr( $location, strlen( $repository ) + 1 );
+		$relative = substr( $normalized_location, strlen( $normalized_root ) + 1 );
 		if ( ( is_dir( $location ) && 0 === strpos( $path, $relative . '/' ) ) || $path === $relative ) {
 			return true;
 		}
@@ -124,7 +135,11 @@ function excluded_by_phpcs( $path, array $patterns, $repository ) {
 			$replacements['/'] = '\\\\';
 		}
 		$pattern = strtr( $exclusion['pattern'], $replacements );
-		$target = 'relative' === $exclusion['type'] ? $path : $repository . '/' . $path;
+		$absolute = realpath( $repository . '/' . $path );
+		if ( false === $absolute ) {
+			throw new RuntimeException( 'Maintained PHP source is missing: ' . $path );
+		}
+		$target = 'relative' === $exclusion['type'] ? str_replace( '/', DIRECTORY_SEPARATOR, $path ) : $absolute;
 		$match = @preg_match( '`' . $pattern . '`i', $target );
 		if ( false === $match ) {
 			throw new RuntimeException( 'PHPCS exclusion pattern needs review: ' . $exclusion['pattern'] );

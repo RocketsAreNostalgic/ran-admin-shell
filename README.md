@@ -71,8 +71,9 @@ render/synchronization tests, in that order.
 - `composer check:coverage` compares actual maintained PHP and Composer CLI
   entries with the direct PHPStan and PHPCS source scopes. A newly added source
   path outside either gate, or an exclusion of maintained source, fails the
-  check. Test/preview fixtures and installed dependencies keep their separate
-  established checks.
+  check. New extensionless Composer commands or imported PHPStan configurations
+  require a reviewed guard update. Test/preview fixtures and installed
+  dependencies keep their separate established checks.
 - `composer lint:syntax` parses PHP in `resources/`, `tools/`, `tests/` and
   `fixtures/`, plus the extensionless `bin/ran-admin-shell` entrypoint. Missing
   required roots or entrypoint and parser failures fail the command. It does

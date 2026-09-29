@@ -68,6 +68,21 @@ final class CoverageContractTest extends TestCase {
 		$this->assertStringContainsString( 'PHPCS excludes maintained PHP: resources/admin-shell.php', $output );
 	}
 
+	public function test_imported_analysis_and_additional_composer_cli_require_review(): void {
+		$analysis = file_get_contents( $this->root . '/phpstan.neon.dist' );
+		file_put_contents( $this->root . '/phpstan.neon.dist', "includes:\n    - shared.neon\n" . $analysis );
+		list( $status, $output ) = $this->check_coverage();
+		$this->assertNotSame( 0, $status );
+		$this->assertStringContainsString( 'PHPStan coverage configuration is missing or needs review', $output );
+		file_put_contents( $this->root . '/phpstan.neon.dist', $analysis );
+
+		file_put_contents( $this->root . '/bin/second-command', "#!/usr/bin/env php\n<?php\n" );
+		file_put_contents( $this->root . '/composer.json', '{"bin":["bin/ran-admin-shell","bin/second-command"]}' );
+		list( $status, $output ) = $this->check_coverage();
+		$this->assertNotSame( 0, $status );
+		$this->assertStringContainsString( 'PHPCS extensionless CLI filter needs review: bin/second-command', $output );
+	}
+
 	private function check_coverage(): array {
 		$process = proc_open( array( PHP_BINARY, $this->root . '/tools/check-coverage.php' ), array( array( 'pipe', 'r' ), array( 'pipe', 'w' ), array( 'pipe', 'w' ) ), $pipes );
 		$this->assertIsResource( $process );
