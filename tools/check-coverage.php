@@ -44,8 +44,11 @@ try {
 		foreach ( $document->documentElement->childNodes as $entry ) {
 			if ( 'file' === $entry->nodeName ) {
 				$standards_paths[] = trim( $entry->textContent );
-			} elseif ( 'exclude-pattern' === $entry->nodeName ) {
-				$standards_exclusions[] = trim( $entry->textContent );
+			} elseif ( 'exclude-pattern' === $entry->nodeName && $entry instanceof DOMElement ) {
+				$standards_exclusions[] = array(
+					'pattern' => trim( $entry->textContent ),
+					'type'    => $entry->getAttribute( 'type' ),
+				);
 			}
 		}
 	}
@@ -88,10 +91,8 @@ try {
 		if ( ! covered_by( $path, $standards_paths, $root ) ) {
 			throw new RuntimeException( 'PHPCS does not cover: ' . $path );
 		}
-		foreach ( $standards_exclusions as $pattern ) {
-			if ( fnmatch( $pattern, $path ) ) {
-				throw new RuntimeException( 'PHPCS excludes maintained PHP: ' . $path );
-			}
+		if ( excluded_by_phpcs( $path, $standards_exclusions, $root ) ) {
+			throw new RuntimeException( 'PHPCS excludes maintained PHP: ' . $path );
 		}
 	}
 	fwrite( STDOUT, 'Maintained PHP coverage: ' . count( $maintained ) . " paths.\n" );
@@ -109,6 +110,26 @@ function covered_by( $path, array $roots, $repository ) {
 		}
 		$relative = substr( $location, strlen( $repository ) + 1 );
 		if ( ( is_dir( $location ) && 0 === strpos( $path, $relative . '/' ) ) || $path === $relative ) {
+			return true;
+		}
+	}
+	return false;
+}
+
+/** Mirror PHPCS 3.13.6 global file exclusions, including relative patterns. */
+function excluded_by_phpcs( $path, array $patterns, $repository ) {
+	foreach ( $patterns as $exclusion ) {
+		$replacements = array( '\\,' => ',', '*' => '.*' );
+		if ( '\\' === DIRECTORY_SEPARATOR ) {
+			$replacements['/'] = '\\\\';
+		}
+		$pattern = strtr( $exclusion['pattern'], $replacements );
+		$target = 'relative' === $exclusion['type'] ? $path : $repository . '/' . $path;
+		$match = @preg_match( '`' . $pattern . '`i', $target );
+		if ( false === $match ) {
+			throw new RuntimeException( 'PHPCS exclusion pattern needs review: ' . $exclusion['pattern'] );
+		}
+		if ( 1 === $match ) {
 			return true;
 		}
 	}

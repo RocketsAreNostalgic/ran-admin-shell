@@ -58,7 +58,11 @@ final class CoverageContractTest extends TestCase {
 	}
 
 	public function test_standards_exclusion_fails(): void {
-		file_put_contents( $this->root . '/phpcs.xml.dist', '<ruleset><file>resources</file><exclude-pattern>resources/*</exclude-pattern></ruleset>' );
+		file_put_contents( $this->root . '/phpcs.xml.dist', '<ruleset><file>resources</file><exclude-pattern>admin-shell\\.php$</exclude-pattern></ruleset>' );
+		list( $status, $output ) = $this->check_coverage();
+		$this->assertNotSame( 0, $status );
+		$this->assertStringContainsString( 'PHPCS excludes maintained PHP: resources/admin-shell.php', $output );
+		file_put_contents( $this->root . '/phpcs.xml.dist', '<ruleset><file>resources</file><exclude-pattern type="relative">^resources/.*</exclude-pattern></ruleset>' );
 		list( $status, $output ) = $this->check_coverage();
 		$this->assertNotSame( 0, $status );
 		$this->assertStringContainsString( 'PHPCS excludes maintained PHP: resources/admin-shell.php', $output );
