@@ -10,3 +10,4 @@
 
 /phpcs-tooling.xml.dist export-ignore
 /phpstan.neon.dist export-ignore
+/tools/check-coverage.php export-ignore

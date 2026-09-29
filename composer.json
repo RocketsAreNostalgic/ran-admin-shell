@@ -23,6 +23,7 @@
 		"bin/ran-admin-shell"
 	],
 	"scripts": {
+		"check:coverage": "@php tools/check-coverage.php",
 		"lint:syntax": "@php tools/lint-syntax.php",
 		"standards": [
 			"phpcs -p",
@@ -31,6 +32,7 @@
 		"standards:fix": "@php tools/fix-standards.php",
 		"test": "phpunit --configuration phpunit.xml.dist",
 		"check": [
+			"@check:coverage",
 			"@lint:syntax",
 			"@standards",
 			"@analyze",

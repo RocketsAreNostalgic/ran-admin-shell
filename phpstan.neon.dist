@@ -3,7 +3,7 @@ parameters:
     phpVersion: 80000
     paths:
         - bin/ran-admin-shell
-        - resources/admin-shell.php
+        - resources
         - tools
     scanFiles:
         - vendor/php-stubs/wordpress-stubs/wordpress-stubs.php

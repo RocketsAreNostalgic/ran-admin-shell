@@ -33,7 +33,7 @@ final class DistributionContractTest extends TestCase {
 		foreach ( array( 'bin/ran-admin-shell', 'tools/SyncCommand.php', 'resources/admin-shell.php', 'resources/admin-shell.css', 'LICENSE', 'composer.json' ) as $path ) {
 			$this->assertNotFalse( $zip->locateName( $path ), $path );
 		}
-		foreach ( array( 'tests/', 'fixtures/', 'docs/', '.github/', '.agents/', 'AGENTS.md', 'vendor/', 'phpcs.xml.dist', 'phpcs-tooling.xml.dist', 'phpstan.neon.dist', 'phpunit.xml.dist' ) as $path ) {
+		foreach ( array( 'tests/', 'fixtures/', 'docs/', '.github/', '.agents/', 'AGENTS.md', 'vendor/', 'phpcs.xml.dist', 'phpcs-tooling.xml.dist', 'phpstan.neon.dist', 'phpunit.xml.dist', 'tools/check-coverage.php' ) as $path ) {
 			$this->assertFalse( $zip->locateName( $path ), $path );
 		}
 		$package = json_decode( $zip->getFromName( 'composer.json' ), true, 512, JSON_THROW_ON_ERROR );

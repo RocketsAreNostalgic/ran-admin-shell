@@ -64,9 +64,16 @@ current.
 ## Development quality commands
 
 Install the tracked dependencies with `composer install`, then run
-`composer check`. The aggregate runs the independent syntax sweep, standards
-check, static analysis and existing render/synchronization tests, in that order.
+`composer check`. The aggregate verifies maintained-PHP coverage, then runs the
+independent syntax sweep, standards check, static analysis and existing
+render/synchronization tests, in that order.
 
+- `composer check:coverage` compares actual maintained PHP and Composer CLI
+  entries with the direct PHPStan and PHPCS source scopes. A newly added source
+  path outside either gate, or an exclusion of maintained source, fails the
+  check. New extensionless Composer commands or imported PHPStan configurations
+  require a reviewed guard update. Test/preview fixtures and installed
+  dependencies keep their separate established checks.
 - `composer lint:syntax` parses PHP in `resources/`, `tools/`, `tests/` and
   `fixtures/`, plus the extensionless `bin/ran-admin-shell` entrypoint. Missing
   required roots or entrypoint and parser failures fail the command. It does
@@ -108,8 +115,9 @@ language target and a 512 MB memory limit; `composer check` includes it.
 The CLI requires registered command-line arguments and exits with a clear
 diagnostic if `$argv` is unavailable (for example, when `register_argc_argv`
 is disabled), rather than passing an undefined variable into the sync command.
-Direct analysis covers the extensionless CLI, `resources/admin-shell.php` and
-all PHP in `tools/`. WordPress 6.5-generation stubs and PHPCS source provide
+Direct analysis covers the extensionless CLI and all PHP under `resources/`
+and `tools/`, including future resource files. WordPress 6.5-generation stubs
+and PHPCS source provide
 symbol discovery only; dependency bodies are not first-party analysis roots.
 The stubs describe APIs, not proof of an installed WordPress runtime.
 
