@@ -38,11 +38,15 @@ try {
 		if ( ! $document->load( $root . '/' . $ruleset, LIBXML_NONET ) ) {
 			throw new RuntimeException( 'PHPCS ruleset cannot be read: ' . $ruleset );
 		}
-		foreach ( $document->getElementsByTagName( 'file' ) as $file ) {
-			$standards_paths[] = trim( $file->textContent );
+		if ( null === $document->documentElement ) {
+			throw new RuntimeException( 'PHPCS ruleset has no root: ' . $ruleset );
 		}
-		foreach ( $document->getElementsByTagName( 'exclude-pattern' ) as $exclude ) {
-			$standards_exclusions[] = trim( $exclude->textContent );
+		foreach ( $document->documentElement->childNodes as $entry ) {
+			if ( 'file' === $entry->nodeName ) {
+				$standards_paths[] = trim( $entry->textContent );
+			} elseif ( 'exclude-pattern' === $entry->nodeName ) {
+				$standards_exclusions[] = trim( $entry->textContent );
+			}
 		}
 	}
 	if ( ! $standards_paths ) {
@@ -52,8 +56,12 @@ try {
 	$maintained = array();
 	$excluded_directories = array( '.git', '.phpstan-cache', '.phpunit.cache', 'vendor', 'node_modules', 'tests', 'fixtures' );
 	$directory = new RecursiveDirectoryIterator( $root, FilesystemIterator::SKIP_DOTS );
-	$filter = new RecursiveCallbackFilterIterator( $directory, static function ( $file ) use ( $excluded_directories ) {
-		return ! $file->isLink() && ( ! $file->isDir() || ! in_array( $file->getFilename(), $excluded_directories, true ) );
+	$filter = new RecursiveCallbackFilterIterator( $directory, static function ( $file ) use ( $excluded_directories, $root ) {
+		$relative = substr( $file->getPathname(), strlen( $root ) + 1 );
+		if ( $file->isLink() && 'php' === $file->getExtension() ) {
+			throw new RuntimeException( 'Maintained PHP is a symbolic link: ' . $relative );
+		}
+		return ! $file->isLink() && ( ! $file->isDir() || ! in_array( $relative, $excluded_directories, true ) );
 	} );
 	foreach ( new RecursiveIteratorIterator( $filter ) as $file ) {
 		if ( $file->isFile() && 'php' === $file->getExtension() ) {

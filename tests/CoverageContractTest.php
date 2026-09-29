@@ -40,6 +40,14 @@ final class CoverageContractTest extends TestCase {
 		$this->assertNotSame( 0, $status );
 		$this->assertStringContainsString( 'PHPStan does not directly cover: NewSource.php', $output );
 		unlink( $this->root . '/NewSource.php' );
+		mkdir( $this->root . '/feature/tests', 0777, true );
+		file_put_contents( $this->root . '/feature/tests/NewSource.php', '<?php return 4;' );
+		list( $status, $output ) = $this->check_coverage();
+		$this->assertNotSame( 0, $status );
+		$this->assertStringContainsString( 'PHPStan does not directly cover: feature/tests/NewSource.php', $output );
+		unlink( $this->root . '/feature/tests/NewSource.php' );
+		rmdir( $this->root . '/feature/tests' );
+		rmdir( $this->root . '/feature' );
 
 		file_put_contents( $this->root . '/resources/second.php', '<?php return 2;' );
 		$configuration = file_get_contents( $this->root . '/phpstan.neon.dist' );
