@@ -113,6 +113,8 @@ final class DistributionContractTest extends TestCase {
 		file_put_contents( $lock_path, $lock_bytes );
 		list( $status, $output ) = $this->run_command( array( $composer, 'install', '--no-dev', '--no-interaction', '--no-progress', '--no-plugins', '--no-scripts' ), $consumer );
 		$this->assertSame( 0, $status, $output );
+		// Composer removed this directory in a child process; discard the earlier stat result.
+		clearstatcache( true, $consumer . '/vendor/ran/admin-shell' );
 		$this->assertDirectoryDoesNotExist( $consumer . '/vendor/ran/admin-shell' );
 		$this->assertSame( $provenance_bytes, file_get_contents( $provenance_path ) );
 		foreach ( $provenance['files'] as $path => $digest ) {
