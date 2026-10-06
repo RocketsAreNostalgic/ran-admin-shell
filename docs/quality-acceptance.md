@@ -10,6 +10,9 @@ no baseline, ignore or fixture exemption is required. Directory scopes include
 new development files automatically, and independent recursive discovery rejects
 any unselected root or split-out file. Lowering the configured level below five
 also fails coverage. Existing real-checker stub/extension safeguards remain.
+Both modern `phpcs:set` and legacy `@codingStandardsChangeSetting` directives
+are rejected, including case variants; real-checker prefix controls prove these
+comments otherwise hide a diagnostic by changing its property.
 
 The change extends existing configuration and coverage controls only. Runtime,
 resource, dependency and consumer-provenance bytes are unchanged. Whole-ecosystem

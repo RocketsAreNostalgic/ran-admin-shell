@@ -195,6 +195,29 @@ file_get_contents( 'fixture' );
 		}
 	}
 
+	public function test_inline_property_changes_cannot_hide_checker_diagnostics(): void {
+		$rules = '<ruleset><file>resources</file><rule ref="WordPress.NamingConventions.PrefixAllGlobals"><properties><property name="prefixes" type="array"><element value="approved"/></property></properties></rule></ruleset>';
+		foreach ( array( 'phpcs:set', 'PHPCS:SET', '@codingStandardsChangeSetting', '@CODINGSTANDARDSCHANGESETTING' ) as $directive ) {
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Configure the isolated real checker to require the approved prefix.
+			file_put_contents( $this->root . '/phpcs.xml.dist', $rules );
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Prove the unmodified diagnostic is active before testing the bypass.
+			file_put_contents( $this->root . '/resources/probe.php', '<?php function rogue_function() {}' );
+			list( $status, $output ) = $this->check_coverage( true );
+			$this->assertNotSame( 0, $status, $output );
+			$this->assertStringContainsString( 'NonPrefixedFunctionFound', $output );
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- The inert comment overrides the locked checker's prefix property.
+			file_put_contents( $this->root . '/resources/probe.php', "<?php\n// " . $directive . " WordPress.NamingConventions.PrefixAllGlobals prefixes rogue\nfunction rogue_function() {}\n" );
+			list( $status, $output ) = $this->check_coverage( true );
+			// Locked PHPCS ignores uppercase legacy syntax; the independent guard rejects it too.
+			$this->assertSame( '@CODINGSTANDARDSCHANGESETTING' === $directive ? 1 : 0, $status, $output );
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Remove test-only XML customization so rejection must be for the source directive itself.
+			file_put_contents( $this->root . '/phpcs.xml.dist', '<ruleset><file>resources</file></ruleset>' );
+			list( $status, $output ) = $this->check_coverage();
+			$this->assertNotSame( 0, $status );
+			$this->assertStringContainsString( 'Blanket, persistent or legacy standards suppression: resources/probe.php', $output );
+		}
+	}
+
 	public function test_exact_ignore_with_reason_leaves_next_line_and_other_diagnostics_checked(): void {
 		$code = 'WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents';
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Configure the real checker to observe exact diagnostic boundaries.

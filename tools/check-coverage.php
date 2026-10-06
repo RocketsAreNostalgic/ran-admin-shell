@@ -148,7 +148,7 @@ try {
 			if ( ! is_array( $token ) || ! in_array( $token[0], array( T_COMMENT, T_DOC_COMMENT ), true ) ) {
 				continue;
 			}
-			if ( preg_match( '~(?:@codingStandardsIgnore\w*|phpcs:ignoreFile|phpcs:disable\b|phpcs:ignore[ \t]*(?:--[^\r\n]*)?(?:\*/)?[ \t]*$)~mi', $token[1] ) ) {
+			if ( preg_match( '~(?:@codingStandards(?:Ignore\w*|ChangeSetting)|phpcs:set\b|phpcs:ignoreFile|phpcs:disable\b|phpcs:ignore[ \t]*(?:--[^\r\n]*)?(?:\*/)?[ \t]*$)~mi', $token[1] ) ) {
 				throw new RuntimeException( 'Blanket, persistent or legacy standards suppression: ' . $maintained_path );
 			}
 			preg_match_all( '~phpcs:ignore\b([^\r\n]*)~i', $token[1], $ignores );
