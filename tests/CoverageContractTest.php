@@ -93,6 +93,16 @@ final class CoverageContractTest extends TestCase {
 		$this->assertStringContainsString( 'PHPCS excludes maintained PHP: resources/admin-shell.php', $output );
 	}
 
+	public function test_analysis_level_cannot_drop_below_five(): void {
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Preserve the isolated analysis configuration for the lower-level regression.
+		$configuration = file_get_contents( $this->root . '/phpstan.neon.dist' );
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Lowering the real checker level must fail the maintained-file contract.
+		file_put_contents( $this->root . '/phpstan.neon.dist', str_replace( 'level: 5', 'level: 4', $configuration ) );
+		list( $status, $output ) = $this->check_coverage();
+		$this->assertNotSame( 0, $status );
+		$this->assertStringContainsString( 'Maintained PHP requires PHPStan level 5 or higher.', $output );
+	}
+
 	public function test_imported_analysis_and_additional_composer_cli_require_review(): void {
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Read exact native file bytes for standalone configuration, immutable resource verification or isolated fixture evidence.
 		$analysis = file_get_contents( $this->root . '/phpstan.neon.dist' );
@@ -113,12 +123,17 @@ final class CoverageContractTest extends TestCase {
 		$this->assertStringContainsString( 'PHP entrypoint requires explicit checker support: bin/second-command', $output );
 	}
 
-	public function test_development_paths_need_standards_but_not_production_analysis(): void {
+	public function test_development_paths_need_direct_analysis_and_standalone_standards(): void {
 		foreach ( array( 'tests', 'fixtures' ) as $directory ) {
 			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_mkdir -- Create native directories for standalone synchronization or the isolated fixture; retain mode and existence checks.
 			mkdir( $this->root . '/' . $directory );
 			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Write exact bytes to the owned native temporary/fixture path; preserve filesystem and distribution observations.
 			file_put_contents( $this->root . '/' . $directory . '/future.php', '<?php return 1;' );
+			list( $status, $output ) = $this->check_coverage();
+			$this->assertNotSame( 0, $status );
+			$this->assertStringContainsString( 'PHPStan does not directly cover: ' . $directory . '/future.php', $output );
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Admit the entire development role; future split files must be selected automatically.
+			file_put_contents( $this->root . '/phpstan.neon.dist', '        - ' . $directory . "\n", FILE_APPEND );
 			list( $status, $output ) = $this->check_coverage();
 			$this->assertNotSame( 0, $status );
 			$this->assertStringContainsString( 'PHPCS does not cover: ' . $directory . '/future.php', $output );

@@ -1,5 +1,22 @@
 # Admin Shell next-beta PHP profile acceptance
 
+## Maintained-file analysis correction — 6 October 2026
+
+The current owner instruction requires every maintained PHP file at level 5,
+including development PHP. The historical production-only boundary below is
+superseded: all sixteen entrypoints are directly analyzed, including seven
+test/bootstrap and two preview files. The locked checker reports no diagnostics;
+no baseline, ignore or fixture exemption is required. Directory scopes include
+new development files automatically, and independent recursive discovery rejects
+any unselected root or split-out file. Lowering the configured level below five
+also fails coverage. Existing real-checker stub/extension safeguards remain.
+
+The change extends existing configuration and coverage controls only. Runtime,
+resource, dependency and consumer-provenance bytes are unchanged. Whole-ecosystem
+exception acceptance remains unfinished under #65/#128. Earlier evidence and
+production-only descriptions below are historical, not current scope.
+
+
 This tranche continues organisation #65/#128 on main
 `ff6e933b031d5d537defcfad7a00e12e4e2ce2ec`. Earlier command, analysis, coverage,
 distribution and stat-cache work (#14–20) remains delivered. No dependency or

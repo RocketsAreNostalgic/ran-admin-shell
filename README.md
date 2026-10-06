@@ -69,12 +69,12 @@ independent syntax sweep, standards check, static analysis and existing
 render/synchronization tests, in that order.
 
 - `composer check:coverage` compares actual maintained PHP and Composer CLI
-  entries with the direct PHPStan and PHPCS source scopes. A newly added source
-  production path outside either gate, or a standards exclusion of maintained
+  entries with the direct PHPStan and PHPCS source scopes. A newly added maintained PHP
+  path outside either gate, or a standards exclusion of maintained
   PHP, fails the check. Blanket, persistent (`phpcs:disable`) and legacy suppression comments also fail.
   New extensionless Composer commands or imported PHPStan configurations require
-  a reviewed guard update. Tests and previews need standards coverage but remain
-  outside production analysis. Installed dependencies remain excluded.
+  a reviewed guard update. Tests and previews require the same direct level-5 analysis as production
+  and tooling. Installed dependencies remain excluded.
 - `composer lint:syntax` parses PHP in `resources/`, `tools/`, `tests/` and
   `fixtures/`, plus the extensionless `bin/ran-admin-shell` entrypoint. Missing
   required roots or entrypoint and parser failures fail the command. It does
@@ -113,13 +113,19 @@ The CLI requires registered command-line arguments and exits with a clear
 diagnostic if `$argv` is unavailable (for example, when `register_argc_argv`
 is disabled), rather than passing an undefined variable into the sync command.
 Direct analysis covers the extensionless CLI and all PHP under `resources/`
-and `tools/`, including future resource files. WordPress 6.5-generation stubs
+and `tools/`, `tests/` and `fixtures/`, including future files in each role.
+An independently discovered maintained file outside these roots fails coverage
+until its whole role is included or a concrete exemption is reviewed.
+WordPress 6.5-generation stubs
 and PHPCS source provide
 symbol discovery only; dependency bodies are not first-party analysis roots.
 The stubs describe APIs, not proof of an installed WordPress runtime.
 
-Tests remain under syntax, common standards, compatibility and PHPUnit gates; preview fixtures receive syntax, common standards and native compatibility. Neither is counted as maintained production
-analysis coverage. Consumer-owned synchronized copies are verified through
+Tests and preview fixtures are now included in direct analysis: all 16 maintained
+PHP entrypoints pass level 5, with no file exemptions or ignored diagnostics.
+The coverage gate rejects a level below 5 and development-role omissions.
+Their existing syntax, common standards, compatibility and PHPUnit checks remain.
+Consumer-owned synchronized copies are verified through
 existing render/sync/provenance tests rather than scanned in sibling checkouts.
 No baseline or ignored PHPStan errors are introduced.
 

@@ -10,11 +10,15 @@ try {
 		throw new RuntimeException( 'PHPStan coverage configuration is missing or needs review.' );
 	}
 	require_once $root . '/vendor/autoload.php';
-	$container      = ( new \PHPStan\DependencyInjection\ContainerFactory( $root ) )->create(
+	$container = ( new \PHPStan\DependencyInjection\ContainerFactory( $root ) )->create(
 		$root . '/.phpstan-cache/coverage',
 		array( $root . '/phpstan.neon.dist' ),
 		array()
 	);
+	$level     = $container->getParameter( 'level' );
+	if ( 'max' !== $level && (int) $level < 5 ) {
+		throw new RuntimeException( 'Maintained PHP requires PHPStan level 5 or higher.' );
+	}
 	$analysis_files = $container->getService( 'fileFinderAnalyse' )->findFiles( $container->getParameter( 'paths' ) )->getFiles();
 	$bundled_stubs  = 'phar://' . realpath( $root . '/vendor/phpstan/phpstan/phpstan.phar' ) . '/stubs/';
 	foreach ( $container->getParameter( 'stubFiles' ) as $stub ) {
@@ -131,11 +135,10 @@ try {
 		if ( ! is_file( $root . '/' . $maintained_path ) ) {
 			throw new RuntimeException( 'Maintained PHP source is missing: ' . $maintained_path );
 		}
-		$development = 0 === strpos( $maintained_path, 'tests/' ) || 0 === strpos( $maintained_path, 'fixtures/' );
-		if ( ! $development && ! in_array( $root . '/' . $maintained_path, $analysis_files, true ) ) {
+		if ( ! in_array( $root . '/' . $maintained_path, $analysis_files, true ) ) {
 			throw new RuntimeException( 'PHPStan does not directly cover: ' . $maintained_path );
 		}
-		$analysed_count += $development ? 0 : 1;
+		++$analysed_count;
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Inspect maintained source comments without executing fixture or tool code.
 		$source = file_get_contents( $root . '/' . $maintained_path );
 		if ( false === $source ) {

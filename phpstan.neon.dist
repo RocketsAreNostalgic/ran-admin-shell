@@ -5,6 +5,8 @@ parameters:
         - bin/ran-admin-shell
         - resources
         - tools
+        - tests
+        - fixtures
     scanFiles:
         - vendor/php-stubs/wordpress-stubs/wordpress-stubs.php
     scanDirectories:
