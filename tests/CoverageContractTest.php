@@ -162,7 +162,7 @@ final class CoverageContractTest extends TestCase {
 		$code = 'WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents';
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Configure the real locked checker against inert native-operation fixtures.
 		file_put_contents( $this->root . '/phpcs.xml.dist', '<ruleset><file>resources</file><rule ref="WordPress.WP.AlternativeFunctions"/></ruleset>' );
-		foreach ( array( '// PHPCS:DISABLE WordPress', '// phpcs:ignorefile', '// PHPCS:IGNORE', '// phpcs:ignore WordPress -- Hide a standard.', '// phpcs:ignore WordPress.WP.AlternativeFunctions -- Hide a category.', '// phpcs:ignore ' . $code, '// phpcs:ignore ' . $code . ' -- ', '/* phpcs:ignore ' . $code . ' -- */' ) as $annotation ) {
+		foreach ( array( '// PHPCS:DISABLE WordPress', '// phpcs:ignorefile', '// phpcs:ignorefileXYZ', '// PHPCS:IGNORE', '// phpcs:ignore WordPress -- Hide a standard.', '// phpcs:ignore WordPress.WP.AlternativeFunctions -- Hide a category.', '// phpcs:ignore ' . $code, '// phpcs:ignore ' . $code . ' -- ', '/* phpcs:ignore ' . $code . ' -- */' ) as $annotation ) {
 			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- The fixture is inspected by PHPCS and coverage, never executed.
 			file_put_contents(
 				$this->root . '/resources/probe.php',
