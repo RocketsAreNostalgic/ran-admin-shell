@@ -123,3 +123,18 @@ scope includes future resources/tools/tests/previews, and discovery still reject
 unaccounted new roots; there is no per-file coverage allowlist. Resource bytes,
 dependencies, runtime contracts and the seven-path production analysis boundary
 remain unchanged.
+
+
+## Review correction: independent discovery and effective selection
+
+Discovery inspects a bounded PHP/shebang header as well as case-insensitive PHP
+extensions. New uppercase or nonstandard PHP entrypoints fail until explicitly
+supported by both existing checker profiles; the existing extensionless Composer
+CLI remains covered. Directory-inclusive scope and profile separation remain.
+PHPStan coverage now uses the locked container's actual FileFinder selection and
+removes configured stub files, rather than inferring analysis from path strings.
+Controls reject extension filtering and body-analysis omissions through stubFiles.
+Local PHPCS arguments are restricted to the current presentation options and the
+reviewed standalone filter; actual checker controls reproduce and reject exclude,
+sniffs and ignore argument bypasses. This does not change resource bytes, locked
+dependencies or the seven-path production analysis boundary.

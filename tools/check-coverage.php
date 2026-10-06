@@ -9,28 +9,15 @@ try {
 	if ( false === $analysis || preg_match( '/^\s*(excludePaths|includes)\s*:/m', $analysis ) ) {
 		throw new RuntimeException( 'PHPStan coverage configuration is missing or needs review.' );
 	}
-	if ( ! preg_match( '/^([ \t]*)paths:[ \t]*$/m', $analysis, $match, PREG_OFFSET_CAPTURE ) ) {
-		throw new RuntimeException( 'PHPStan direct paths are missing or need review.' );
-	}
-	$indent         = strlen( $match[1][0] );
-	$remainder      = substr( $analysis, $match[0][1] + strlen( $match[0][0] ) );
-	$analysis_paths = array();
-	foreach ( preg_split( '/\R/', $remainder ) as $line ) {
-		if ( '' === trim( $line ) || '#' === substr( ltrim( $line ), 0, 1 ) ) {
-			continue;
-		}
-		$depth = strlen( $line ) - strlen( ltrim( $line, " \t" ) );
-		if ( $depth <= $indent ) {
-			break;
-		}
-		if ( ! preg_match( '/^[ \t]+-[ \t]+([A-Za-z0-9_.\/-]+)[ \t]*$/', $line, $entry ) ) {
-			throw new RuntimeException( 'PHPStan direct paths need review: ' . trim( $line ) );
-		}
-		$analysis_paths[] = $entry[1];
-	}
-	if ( ! $analysis_paths ) {
-		throw new RuntimeException( 'PHPStan has no direct source paths.' );
-	}
+	require_once $root . '/vendor/autoload.php';
+	$container      = ( new \PHPStan\DependencyInjection\ContainerFactory( $root ) )->create(
+		$root . '/.phpstan-cache/coverage',
+		array( $root . '/phpstan.neon.dist' ),
+		array()
+	);
+	$analysis_files = $container->getService( 'fileFinderAnalyse' )->findFiles( $container->getParameter( 'paths' ) )->getFiles();
+	// Configured stub files provide declarations; PHPStan removes them from direct body analysis.
+	$analysis_files = array_diff( $analysis_files, $container->getParameter( 'stubFiles' ) );
 
 	$standards_paths      = array();
 	$standards_exclusions = array();
@@ -40,6 +27,16 @@ try {
 		$document                         = new DOMDocument();
 		if ( ! $document->load( $root . '/' . $ruleset, LIBXML_NONET ) ) {
 			throw new RuntimeException( 'PHPCS ruleset cannot be read: ' . $ruleset );
+		}
+		foreach ( $document->getElementsByTagName( 'arg' ) as $argument ) {
+			$name  = $argument->getAttribute( 'name' );
+			$value = $argument->getAttribute( 'value' );
+			if ( ( 'basepath' === $name && '.' === $value ) || ( 'colors' === $name && '' === $value )
+				|| ( '' === $name && 'sp' === $value )
+				|| ( 'phpcs-tooling.xml.dist' === $ruleset && 'filter' === $name && 'tools/StandardsFilter.php' === $value ) ) {
+				continue;
+			}
+			throw new RuntimeException( 'PHPCS local argument needs review: ' . $ruleset . ' ' . $name );
 		}
 		// Local rule overrides need review; locked shared-profile internals remain authoritative.
 		foreach ( $document->getElementsByTagName( 'rule' ) as $rule ) {
@@ -88,7 +85,7 @@ try {
 		$directory,
 		static function ( $file ) use ( $excluded_directories, $root ) {
 			$relative = substr( $file->getPathname(), strlen( $root ) + 1 );
-			if ( $file->isLink() && 'php' === $file->getExtension() ) {
+			if ( $file->isLink() && 'php' === strtolower( $file->getExtension() ) ) {
 				// phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Internal standalone CLI exception data; the CLI reports it to STDERR, not HTML.
 				throw new RuntimeException( 'Maintained PHP is a symbolic link: ' . $relative );
 			}
@@ -96,10 +93,20 @@ try {
 		}
 	);
 	foreach ( new RecursiveIteratorIterator( $filter ) as $file ) {
-		if ( $file->isFile() && 'php' === $file->getExtension() ) {
-			$maintained[] = str_replace( '\\', '/', substr( $file->getPathname(), strlen( $root ) + 1 ) );
+		if ( ! $file->isFile() ) {
+			continue;
+		}
+		$relative = str_replace( '\\', '/', substr( $file->getPathname(), strlen( $root ) + 1 ) );
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Inspect only a bounded header to discover inert PHP entrypoints with nonstandard filenames.
+		$header = file_get_contents( $file->getPathname(), false, null, 0, 512 );
+		if ( 'php' === strtolower( $file->getExtension() ) || ( is_string( $header ) && preg_match( '/\A(?:#![^\r\n]*\R)?\s*<\?(?:php(?:\s|$)|=)/i', $header ) ) ) {
+			if ( 'php' !== $file->getExtension() && 'bin/ran-admin-shell' !== $relative ) {
+				throw new RuntimeException( 'PHP entrypoint requires explicit checker support: ' . $relative );
+			}
+			$maintained[] = $relative;
 		}
 	}
+
 	// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Read exact native file bytes for standalone configuration, immutable resource verification or isolated fixture evidence.
 	$manifest = json_decode( file_get_contents( $root . '/composer.json' ), true, 512, JSON_THROW_ON_ERROR );
 	foreach ( $manifest['bin'] ?? array() as $command ) {
@@ -121,7 +128,7 @@ try {
 			throw new RuntimeException( 'Maintained PHP source is missing: ' . $maintained_path );
 		}
 		$development = 0 === strpos( $maintained_path, 'tests/' ) || 0 === strpos( $maintained_path, 'fixtures/' );
-		if ( ! $development && ! covered_by( $maintained_path, $analysis_paths, $root ) ) {
+		if ( ! $development && ! in_array( $root . '/' . $maintained_path, $analysis_files, true ) ) {
 			throw new RuntimeException( 'PHPStan does not directly cover: ' . $maintained_path );
 		}
 		$analysed_count += $development ? 0 : 1;

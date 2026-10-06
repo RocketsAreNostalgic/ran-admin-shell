@@ -14,6 +14,7 @@ final class CoverageContractTest extends TestCase {
 			mkdir( $this->root . '/' . $directory, 0777, true );
 		}
 		copy( dirname( __DIR__ ) . '/tools/check-coverage.php', $this->root . '/tools/check-coverage.php' );
+		symlink( dirname( __DIR__ ) . '/vendor', $this->root . '/vendor' );
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Write exact bytes to the owned native temporary/fixture path; preserve filesystem and distribution observations.
 		file_put_contents( $this->root . '/bin/ran-admin-shell', "#!/usr/bin/env php\n<?php\n" );
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Write exact bytes to the owned native temporary/fixture path; preserve filesystem and distribution observations.
@@ -21,7 +22,7 @@ final class CoverageContractTest extends TestCase {
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Write exact bytes to the owned native temporary/fixture path; preserve filesystem and distribution observations.
 		file_put_contents( $this->root . '/composer.json', '{"bin":["bin/ran-admin-shell"]}' );
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Write exact bytes to the owned native temporary/fixture path; preserve filesystem and distribution observations.
-		file_put_contents( $this->root . '/phpstan.neon.dist', "parameters:\n    paths:\n        - bin/ran-admin-shell\n        - resources\n        - tools\n" );
+		file_put_contents( $this->root . '/phpstan.neon.dist', "parameters:\n    level: 5\n    paths:\n        - bin/ran-admin-shell\n        - resources\n        - tools\n" );
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Write exact bytes to the owned native temporary/fixture path; preserve filesystem and distribution observations.
 		file_put_contents( $this->root . '/phpcs.xml.dist', '<ruleset><file>resources</file></ruleset>' );
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Write exact bytes to the owned native temporary/fixture path; preserve filesystem and distribution observations.
@@ -33,7 +34,7 @@ final class CoverageContractTest extends TestCase {
 		$iterator = new RecursiveIteratorIterator( new RecursiveDirectoryIterator( $this->root, FilesystemIterator::SKIP_DOTS ), RecursiveIteratorIterator::CHILD_FIRST );
 		foreach ( $iterator as $file ) {
 			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_rmdir, WordPress.WP.AlternativeFunctions.unlink_unlink -- Remove owned native fixture/temporary entries with the existing link and cleanup boundaries.
-			$file->isDir() ? rmdir( $file->getPathname() ) : unlink( $file->getPathname() );
+			( $file->isDir() && ! $file->isLink() ) ? rmdir( $file->getPathname() ) : unlink( $file->getPathname() );
 		}
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_rmdir -- Remove owned native fixture/temporary entries with the existing link and cleanup boundaries.
 		rmdir( $this->root );
@@ -109,7 +110,7 @@ final class CoverageContractTest extends TestCase {
 		file_put_contents( $this->root . '/composer.json', '{"bin":["bin/ran-admin-shell","bin/second-command"]}' );
 		list( $status, $output ) = $this->check_coverage();
 		$this->assertNotSame( 0, $status );
-		$this->assertStringContainsString( 'PHPCS extensionless CLI filter needs review: bin/second-command', $output );
+		$this->assertStringContainsString( 'PHP entrypoint requires explicit checker support: bin/second-command', $output );
 	}
 
 	public function test_development_paths_need_standards_but_not_production_analysis(): void {
@@ -231,6 +232,48 @@ file_get_contents( 'fixture' );
 		file_put_contents( $this->root . '/phpcs.xml.dist', '<ruleset><file>resources</file></ruleset>' );
 		list( $status, $output ) = $this->check_coverage();
 		$this->assertSame( 0, $status, $output );
+	}
+
+	public function test_nonstandard_php_entrypoints_cannot_escape_discovery(): void {
+		foreach ( array( 'resources/NewSource.PHP', 'tools/future-command', 'tests/future.inc' ) as $path ) {
+			if ( ! is_dir( dirname( $this->root . '/' . $path ) ) ) {
+				// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_mkdir -- Create the isolated future test source directory.
+				mkdir( dirname( $this->root . '/' . $path ) );
+			}
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Inert PHP with a shebang tests header discovery outside lowercase .php.
+			file_put_contents( $this->root . '/' . $path, "#!/usr/bin/env php\n<?php throw new RuntimeException('never execute');" );
+			list( $status, $output ) = $this->check_coverage();
+			$this->assertNotSame( 0, $status );
+			$this->assertStringContainsString( 'PHP entrypoint requires explicit checker support: ' . $path, $output );
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.unlink_unlink -- Remove only this inert isolated source fixture.
+			unlink( $this->root . '/' . $path );
+		}
+	}
+
+	public function test_effective_analysis_extensions_and_stubs_cannot_hide_source(): void {
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Preserve the isolated PHPStan configuration for each omission control.
+		$configuration = file_get_contents( $this->root . '/phpstan.neon.dist' );
+		foreach ( array( "    fileExtensions!: [inc]\n", "    stubFiles:\n        - resources/admin-shell.php\n" ) as $override ) {
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Mutate the real container configuration without changing declared source roots.
+			file_put_contents( $this->root . '/phpstan.neon.dist', $configuration . $override );
+			list( $status, $output ) = $this->check_coverage();
+			$this->assertNotSame( 0, $status );
+			$this->assertStringContainsString( 'PHPStan does not directly cover: resources/admin-shell.php', $output );
+		}
+	}
+
+	public function test_xml_arguments_cannot_disable_actual_diagnostics(): void {
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Supply inert native-operation input to the actual locked checker.
+		file_put_contents( $this->root . '/resources/probe.php', "<?php\nfile_get_contents( 'fixture' );\n" );
+		foreach ( array( '<arg name="exclude" value="WordPress.WP.AlternativeFunctions"/>', '<arg name="sniffs" value="Generic.PHP.LowerCaseConstant"/>', '<arg name="ignore" value="*/probe.php"/>' ) as $argument ) {
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Demonstrate argument-level checker suppression in the isolated resource ruleset.
+			file_put_contents( $this->root . '/phpcs.xml.dist', '<ruleset><file>resources</file><rule ref="WordPress.WP.AlternativeFunctions"/><rule ref="Generic.PHP.LowerCaseConstant"/>' . $argument . '</ruleset>' );
+			list( $status, $output ) = $this->check_coverage( true );
+			$this->assertSame( 0, $status, $output );
+			list( $status, $output ) = $this->check_coverage();
+			$this->assertNotSame( 0, $status );
+			$this->assertStringContainsString( 'PHPCS local argument needs review:', $output );
+		}
 	}
 
 	private function check_coverage( bool $use_checker = false ): array {
