@@ -274,7 +274,7 @@ file_get_contents( 'fixture' );
 
 	public function test_conditional_xml_elements_cannot_disable_checker_rules(): void {
 		$code  = 'WordPress.WP.AlternativeFunctions.json_encode_json_encode';
-		$rules = '<ruleset><file>resources</file><rule ref="RANWordPressLibrary"/></ruleset>';
+		$rules = '<ruleset><file>resources</file><rule ref="RANWordPressLibrary"/><rule ref="RANOwnedMethods"/></ruleset>';
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Inspect inert native JSON input with the real locked checker.
 		file_put_contents( $this->root . '/resources/probe.php', '<?php json_encode( array() );' );
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Establish the shared-profile diagnostic before mutating its conditional attributes.
@@ -286,6 +286,8 @@ file_get_contents( 'fixture' );
 			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Reproduce PHPCS skipping the otherwise required shared rule.
 			file_put_contents( $this->root . '/phpcs.xml.dist', str_replace( 'ref="RANWordPressLibrary"', 'ref="RANWordPressLibrary" ' . $condition, $rules ) );
 			list( $status, $output ) = $this->check_coverage( true );
+			$this->assertSame( 0, $status, $output );
+			$this->assertIsArray( json_decode( $output, true, 512, JSON_THROW_ON_ERROR ) );
 			$this->assertStringNotContainsString( $code, $output );
 			list( $status, $output ) = $this->check_coverage();
 			$this->assertNotSame( 0, $status, $output );
