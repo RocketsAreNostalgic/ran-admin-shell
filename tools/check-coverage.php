@@ -41,6 +41,22 @@ try {
 		if ( ! $document->load( $root . '/' . $ruleset, LIBXML_NONET ) ) {
 			throw new RuntimeException( 'PHPCS ruleset cannot be read: ' . $ruleset );
 		}
+		// Local rule overrides need review; locked shared-profile internals remain authoritative.
+		foreach ( $document->getElementsByTagName( 'rule' ) as $rule ) {
+			// phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase -- DOM exposes childNodes for inspecting local rule overrides.
+			foreach ( $rule->childNodes as $override ) {
+				if ( ! $override instanceof DOMElement ) {
+					continue;
+				}
+				if ( 'phpcs-tooling.xml.dist' === $ruleset && 'WordPress-Extra' === $rule->getAttribute( 'ref' )
+					&& 'exclude' === $override->tagName // phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase -- DOM exposes the XML element tagName.
+					&& in_array( $override->getAttribute( 'name' ), array( 'WordPress.Files.FileName.NotHyphenatedLowercase', 'WordPress.Files.FileName.InvalidClassFileName' ), true )
+					&& 1 === $override->attributes->length && ! $override->hasChildNodes() ) {
+					continue;
+				}
+				throw new RuntimeException( 'PHPCS local rule override needs review: ' . $ruleset . ' ' . $rule->getAttribute( 'ref' ) );
+			}
+		}
 		// phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase -- Preserve the native DOM/ZipArchive property contract; this is not an owned property.
 		if ( null === $document->documentElement ) {
 			throw new RuntimeException( 'PHPCS ruleset has no root: ' . $ruleset );
@@ -115,8 +131,21 @@ try {
 			throw new RuntimeException( 'Cannot inspect maintained PHP: ' . $maintained_path );
 		}
 		foreach ( token_get_all( $source ) as $token ) {
-			if ( is_array( $token ) && in_array( $token[0], array( T_COMMENT, T_DOC_COMMENT ), true ) && preg_match( '~(?:@codingStandardsIgnore\w*|phpcs:ignoreFile|phpcs:disable\b|phpcs:ignore[ \t]*(?:--[^\r\n]*)?(?:\*/)?[ \t]*$)~m', $token[1] ) ) {
+			if ( ! is_array( $token ) || ! in_array( $token[0], array( T_COMMENT, T_DOC_COMMENT ), true ) ) {
+				continue;
+			}
+			if ( preg_match( '~(?:@codingStandardsIgnore\w*|phpcs:ignoreFile\b|phpcs:disable\b|phpcs:ignore[ \t]*(?:--[^\r\n]*)?(?:\*/)?[ \t]*$)~mi', $token[1] ) ) {
 				throw new RuntimeException( 'Blanket, persistent or legacy standards suppression: ' . $maintained_path );
+			}
+			preg_match_all( '~phpcs:ignore\b([^\r\n]*)~i', $token[1], $ignores );
+			foreach ( $ignores[1] as $ignore ) {
+				$ignore     = preg_replace( '~\s*\*/\s*$~', '', $ignore );
+				$parts      = explode( '--', $ignore, 2 );
+				$diagnostic = '[A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*){3}';
+				if ( 2 !== count( $parts ) || ! preg_match( '~^\s*' . $diagnostic . '(?:\s*,\s*' . $diagnostic . ')*\s*$~', $parts[0] )
+					|| ! preg_match( '/[A-Za-z0-9]/', $parts[1] ) ) {
+					throw new RuntimeException( 'Standards ignore needs exact diagnostic codes and a concrete reason: ' . $maintained_path );
+				}
 			}
 		}
 		$required_ruleset = 0 === strpos( $maintained_path, 'resources/' ) ? 'phpcs.xml.dist' : 'phpcs-tooling.xml.dist';

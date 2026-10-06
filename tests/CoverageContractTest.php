@@ -145,7 +145,7 @@ final class CoverageContractTest extends TestCase {
 	}
 
 	public function test_blanket_and_legacy_suppressions_fail_without_executing_source(): void {
-		foreach ( array( '// phpcs:ignoreFile', '// phpcs:disable -- blanket', '// phpcs:ignore', '// @codingStandardsIgnoreLine', '/* phpcs:disable */', '/** phpcs:ignore */', '// phpcs:disable WordPress.WP.AlternativeFunctions', '/* phpcs:disable WordPress.PHP.NoSilencedErrors.Discouraged */', "// phpcs:disable WordPress.WP.AlternativeFunctions\n// phpcs:enable WordPress.WP.AlternativeFunctions" ) as $annotation ) {
+		foreach ( array( '// phpcs:ignoreFile', '// phpcs:disable -- blanket', '// phpcs:ignore', '// @codingStandardsIgnoreLine', '// @codingstandardsignoreline', '/* phpcs:disable */', '/** phpcs:ignore */', '// phpcs:disable WordPress.WP.AlternativeFunctions', '/* phpcs:disable WordPress.PHP.NoSilencedErrors.Discouraged */', "// phpcs:disable WordPress.WP.AlternativeFunctions\n// phpcs:enable WordPress.WP.AlternativeFunctions" ) as $annotation ) {
 			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Write exact bytes to the owned native temporary/fixture path; preserve filesystem and distribution observations.
 			file_put_contents( $this->root . '/resources/probe.php', "<?php\n" . $annotation . "\nthrow new RuntimeException('must not execute');\n" );
 			list( $status, $output ) = $this->check_coverage();
@@ -158,9 +158,84 @@ final class CoverageContractTest extends TestCase {
 		$this->assertSame( 0, $status, $output );
 	}
 
-	private function check_coverage(): array {
+	public function test_case_variants_and_broad_ignores_cannot_hide_real_checker_findings(): void {
+		$code = 'WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents';
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Configure the real locked checker against inert native-operation fixtures.
+		file_put_contents( $this->root . '/phpcs.xml.dist', '<ruleset><file>resources</file><rule ref="WordPress.WP.AlternativeFunctions"/></ruleset>' );
+		foreach ( array( '// PHPCS:DISABLE WordPress', '// phpcs:ignorefile', '// PHPCS:IGNORE', '// phpcs:ignore WordPress -- Hide a standard.', '// phpcs:ignore WordPress.WP.AlternativeFunctions -- Hide a category.', '// phpcs:ignore ' . $code, '// phpcs:ignore ' . $code . ' -- ', '/* phpcs:ignore ' . $code . ' -- */' ) as $annotation ) {
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- The fixture is inspected by PHPCS and coverage, never executed.
+			file_put_contents(
+				$this->root . '/resources/probe.php',
+				'<?php
+' . $annotation . "
+file_get_contents( 'fixture' );
+"
+			);
+			list( $status, $output ) = $this->check_coverage( true );
+			$this->assertSame( 0, $status, $annotation . $output );
+			list( $status, $output ) = $this->check_coverage();
+			$this->assertNotSame( 0, $status, $annotation );
+			$this->assertMatchesRegularExpression( '/(?:standards suppression:|concrete reason:)/', $output );
+		}
+	}
+
+	public function test_exact_ignore_with_reason_leaves_next_line_and_other_diagnostics_checked(): void {
+		$code = 'WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents';
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Configure the real checker to observe exact diagnostic boundaries.
+		file_put_contents( $this->root . '/phpcs.xml.dist', '<ruleset><file>resources</file><rule ref="WordPress.WP.AlternativeFunctions"/></ruleset>' );
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Emit inert PHP with a justified first read and two unsuppressed native operations.
+		file_put_contents(
+			$this->root . '/resources/probe.php',
+			'<?php
+// PHPCS:IGNORE ' . $code . " -- Read controlled fixture bytes without WordPress.
+file_get_contents( 'one' );
+file_get_contents( 'two' );
+json_encode( array() );
+"
+		);
+		list( $status, $output ) = $this->check_coverage();
+		$this->assertSame( 0, $status, $output );
+		list( $status, $output ) = $this->check_coverage( true );
+		$this->assertNotSame( 0, $status );
+		$report   = json_decode( $output, true, 512, JSON_THROW_ON_ERROR );
+		$messages = array_values( $report['files'] )[0]['messages'];
+		$this->assertSame( array( 4, 5 ), array_column( $messages, 'line' ) );
+		$this->assertSame( array( $code, 'WordPress.WP.AlternativeFunctions.json_encode_json_encode' ), array_column( $messages, 'source' ) );
+	}
+
+	public function test_local_xml_rule_overrides_cannot_hide_real_checker_findings(): void {
+		$code = 'WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents';
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- The native read is inert input to the actual checker.
+		file_put_contents(
+			$this->root . '/resources/probe.php',
+			"<?php
+file_get_contents( 'fixture' );
+"
+		);
+		foreach ( array( '<rule ref="WordPress.WP.AlternativeFunctions"><exclude name="' . $code . '"/></rule>', '<rule ref="' . $code . '"><severity>0</severity></rule>', '<rule ref="WordPress.WP.AlternativeFunctions"><exclude-pattern>probe.php</exclude-pattern></rule>' ) as $override ) {
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Simulate a local profile waiver without modifying the real or locked shared rulesets.
+			file_put_contents( $this->root . '/phpcs.xml.dist', '<ruleset><file>resources</file>' . $override . '</ruleset>' );
+			list( $status, $output ) = $this->check_coverage( true );
+			$this->assertSame( 0, $status, $output );
+			list( $status, $output ) = $this->check_coverage();
+			$this->assertNotSame( 0, $status );
+			$this->assertStringContainsString( 'PHPCS local rule override needs review:', $output );
+		}
+		// Current tooling's two reviewed PSR-4 filename exclusions remain accepted.
+		copy( dirname( __DIR__ ) . '/phpcs-tooling.xml.dist', $this->root . '/phpcs-tooling.xml.dist' );
+		foreach ( array( 'tests', 'fixtures' ) as $directory ) {
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_mkdir -- Supply current directory scopes in the isolated configuration fixture.
+			mkdir( $this->root . '/' . $directory );
+		}
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Restore the resource profile after the negative XML probes.
+		file_put_contents( $this->root . '/phpcs.xml.dist', '<ruleset><file>resources</file></ruleset>' );
+		list( $status, $output ) = $this->check_coverage();
+		$this->assertSame( 0, $status, $output );
+	}
+
+	private function check_coverage( bool $use_checker = false ): array {
 		// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.system_calls_proc_open -- Run the existing isolated CLI/checker command with its argument vector and observed exit status.
-		$process = proc_open( array( PHP_BINARY, $this->root . '/tools/check-coverage.php' ), array( array( 'pipe', 'r' ), array( 'pipe', 'w' ), array( 'pipe', 'w' ) ), $pipes );
+		$process = proc_open( $use_checker ? array( PHP_BINARY, dirname( __DIR__ ) . '/vendor/bin/phpcs', '--standard=' . $this->root . '/phpcs.xml.dist', '--report=json', '--no-colors', '-q', $this->root . '/resources/probe.php' ) : array( PHP_BINARY, $this->root . '/tools/check-coverage.php' ), array( array( 'pipe', 'r' ), array( 'pipe', 'w' ), array( 'pipe', 'w' ) ), $pipes );
 		$this->assertIsResource( $process );
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose -- Close the owned subprocess pipe; WordPress filesystem wrappers do not own this stream.
 		fclose( $pipes[0] );

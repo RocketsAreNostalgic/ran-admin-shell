@@ -103,3 +103,23 @@ Corrected canonical checks pass 30 tests / 250 assertions; focused coverage
 checks pass 6 / 74. Differential controls reproduce the old category-disable,
 resource-only test and resource-only preview bypasses, and reject all three with
 the corrected guard. A tooling exclusion remains rejected under both versions.
+
+## Review correction: exact local exceptions
+
+Comment-token inspection now treats PHPCS directives case-insensitively. An
+occurrence-local ignore must name complete four-part diagnostic codes and carry
+a nonempty written rationale; standard/category selectors and missing reasons
+fail coverage. A reason's factual justification still requires source review.
+Local XML rule options require review too: the only accepted nested options are
+the two existing WordPress-Extra PSR-4 filename exclusions in the tooling ruleset.
+Locked shared-profile internals remain unchanged; this guard does not reinterpret
+their inheritance or replace PHPCS.
+
+Actual-checker controls reproduce case-variant/broad/reasonless comment bypasses
+and rule-level excludes/severity-zero bypasses, then require the coverage gate
+to reject them. A justified exact ignore remains accepted while the next line
+and a different native-operation diagnostic remain reported. Existing directory
+scope includes future resources/tools/tests/previews, and discovery still rejects
+unaccounted new roots; there is no per-file coverage allowlist. Resource bytes,
+dependencies, runtime contracts and the seven-path production analysis boundary
+remain unchanged.
