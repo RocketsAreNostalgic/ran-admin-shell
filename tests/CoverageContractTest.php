@@ -253,12 +253,15 @@ file_get_contents( 'fixture' );
 	public function test_effective_analysis_extensions_and_stubs_cannot_hide_source(): void {
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Preserve the isolated PHPStan configuration for each omission control.
 		$configuration = file_get_contents( $this->root . '/phpstan.neon.dist' );
-		foreach ( array( "    fileExtensions!: [inc]\n", "    stubFiles:\n        - resources/admin-shell.php\n" ) as $override ) {
+		foreach ( array(
+			"    fileExtensions!: [inc]\n" => 'PHPStan does not directly cover: resources/admin-shell.php',
+			"    stubFiles:\n        - resources/admin-shell.php\n" => 'PHPStan configured stub files need explicit coverage review.',
+		) as $override => $expected ) {
 			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Mutate the real container configuration without changing declared source roots.
 			file_put_contents( $this->root . '/phpstan.neon.dist', $configuration . $override );
 			list( $status, $output ) = $this->check_coverage();
 			$this->assertNotSame( 0, $status );
-			$this->assertStringContainsString( 'PHPStan does not directly cover: resources/admin-shell.php', $output );
+			$this->assertStringContainsString( $expected, $output );
 		}
 	}
 

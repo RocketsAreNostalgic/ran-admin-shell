@@ -131,9 +131,10 @@ Discovery inspects a bounded PHP/shebang header as well as case-insensitive PHP
 extensions. New uppercase or nonstandard PHP entrypoints fail until explicitly
 supported by both existing checker profiles; the existing extensionless Composer
 CLI remains covered. Directory-inclusive scope and profile separation remain.
-PHPStan coverage now uses the locked container's actual FileFinder selection and
-removes configured stub files, rather than inferring analysis from path strings.
-Controls reject extension filtering and body-analysis omissions through stubFiles.
+PHPStan coverage now uses the locked container's actual FileFinder selection
+rather than inferring analysis from path strings. Configured stubFiles require
+explicit coverage review; none are used by the accepted profile. Controls reject
+extension filtering and body-analysis omissions through stubFiles.
 Local PHPCS arguments are restricted to the current presentation options and the
 reviewed standalone filter; actual checker controls reproduce and reject exclude,
 sniffs and ignore argument bypasses. This does not change resource bytes, locked

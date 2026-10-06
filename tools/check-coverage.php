@@ -16,8 +16,12 @@ try {
 		array()
 	);
 	$analysis_files = $container->getService( 'fileFinderAnalyse' )->findFiles( $container->getParameter( 'paths' ) )->getFiles();
-	// Configured stub files provide declarations; PHPStan removes them from direct body analysis.
-	$analysis_files = array_diff( $analysis_files, $container->getParameter( 'stubFiles' ) );
+	$bundled_stubs  = 'phar://' . realpath( $root . '/vendor/phpstan/phpstan/phpstan.phar' ) . '/stubs/';
+	foreach ( $container->getParameter( 'stubFiles' ) as $stub ) {
+		if ( 0 !== strpos( $stub, $bundled_stubs ) ) {
+			throw new RuntimeException( 'PHPStan configured stub files need explicit coverage review.' );
+		}
+	}
 
 	$standards_paths      = array();
 	$standards_exclusions = array();
