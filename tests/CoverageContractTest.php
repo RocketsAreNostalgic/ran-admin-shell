@@ -121,21 +121,36 @@ final class CoverageContractTest extends TestCase {
 			list( $status, $output ) = $this->check_coverage();
 			$this->assertNotSame( 0, $status );
 			$this->assertStringContainsString( 'PHPCS does not cover: ' . $directory . '/future.php', $output );
+			$resource_config = $this->root . '/phpcs.xml.dist';
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents, WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Exercise a misrouted fixture profile in the isolated checker layout.
+			file_put_contents( $resource_config, str_replace( '</ruleset>', '<file>' . $directory . '</file></ruleset>', file_get_contents( $resource_config ) ) );
+			list( $status, $output ) = $this->check_coverage();
+			$this->assertNotSame( 0, $status );
+			$this->assertStringContainsString( 'PHPCS does not cover: ' . $directory . '/future.php in phpcs-tooling.xml.dist', $output );
 			$config = $this->root . '/phpcs-tooling.xml.dist';
 			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents, WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Write exact bytes to the owned native temporary/fixture path; preserve filesystem and distribution observations. Read exact native file bytes for standalone configuration, immutable resource verification or isolated fixture evidence.
 			file_put_contents( $config, str_replace( '</ruleset>', '<file>' . $directory . '</file></ruleset>', file_get_contents( $config ) ) );
 			list( $status, $output ) = $this->check_coverage();
 			$this->assertSame( 0, $status, $output );
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Save the exact isolated profile before testing its own exclusion.
+			$tooling_config = file_get_contents( $config );
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Resource coverage must not rescue a standalone exclusion.
+			file_put_contents( $config, str_replace( '</ruleset>', '<exclude-pattern>' . $directory . '/future.php</exclude-pattern></ruleset>', $tooling_config ) );
+			list( $status, $output ) = $this->check_coverage();
+			$this->assertNotSame( 0, $status );
+			$this->assertStringContainsString( 'PHPCS excludes maintained PHP: ' . $directory . '/future.php', $output );
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Restore the isolated standalone profile for the next scenario.
+			file_put_contents( $config, $tooling_config );
 		}
 	}
 
 	public function test_blanket_and_legacy_suppressions_fail_without_executing_source(): void {
-		foreach ( array( '// phpcs:ignoreFile', '// phpcs:disable -- blanket', '// phpcs:ignore', '// @codingStandardsIgnoreLine', '/* phpcs:disable */', '/** phpcs:ignore */' ) as $annotation ) {
+		foreach ( array( '// phpcs:ignoreFile', '// phpcs:disable -- blanket', '// phpcs:ignore', '// @codingStandardsIgnoreLine', '/* phpcs:disable */', '/** phpcs:ignore */', '// phpcs:disable WordPress.WP.AlternativeFunctions', '/* phpcs:disable WordPress.PHP.NoSilencedErrors.Discouraged */', "// phpcs:disable WordPress.WP.AlternativeFunctions\n// phpcs:enable WordPress.WP.AlternativeFunctions" ) as $annotation ) {
 			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Write exact bytes to the owned native temporary/fixture path; preserve filesystem and distribution observations.
 			file_put_contents( $this->root . '/resources/probe.php', "<?php\n" . $annotation . "\nthrow new RuntimeException('must not execute');\n" );
 			list( $status, $output ) = $this->check_coverage();
 			$this->assertNotSame( 0, $status );
-			$this->assertStringContainsString( 'Blanket or legacy standards suppression: resources/probe.php', $output );
+			$this->assertStringContainsString( 'Blanket, persistent or legacy standards suppression: resources/probe.php', $output );
 		}
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Write exact bytes to the owned native temporary/fixture path; preserve filesystem and distribution observations.
 		file_put_contents( $this->root . '/resources/probe.php', '<?php // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- Specific diagnostic allowance.' );

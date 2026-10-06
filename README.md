@@ -71,7 +71,7 @@ render/synchronization tests, in that order.
 - `composer check:coverage` compares actual maintained PHP and Composer CLI
   entries with the direct PHPStan and PHPCS source scopes. A newly added source
   production path outside either gate, or a standards exclusion of maintained
-  PHP, fails the check. Blanket and legacy PHPCS suppression comments also fail.
+  PHP, fails the check. Blanket, persistent (`phpcs:disable`) and legacy suppression comments also fail.
   New extensionless Composer commands or imported PHPStan configurations require
   a reviewed guard update. Tests and previews need standards coverage but remain
   outside production analysis. Installed dependencies remain excluded.

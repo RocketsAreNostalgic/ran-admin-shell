@@ -46,7 +46,7 @@ changes are included.
 No blanket all-rule suppression or broad native-operation waiver is introduced.
 The existing coverage tool now checks standards inclusion/exclusions for tests
 and previews as well as production, while maintaining their distinct analysis
-boundary. Comment-token inspection rejects blanket and legacy PHPCS bypasses;
+boundary. Comment-token inspection rejects blanket, persistent and legacy PHPCS bypasses;
 fixture string literals are not mistaken for operative annotations.
 
 Existing real-PHPCS/PHPCBF controls prove current/future CLI, tool, test, preview
@@ -72,7 +72,7 @@ separate; the historical level-6 probe does not reopen closed #13.
 
 Local candidate checks pass on PHP 8.3.6: all 16 PHP entrypoints parse and have
 standards coverage, PHPCS and PHPStan level 5 are clean, and PHPUnit passes
-30 tests / 229 assertions. Focused checker/coverage controls pass 12 / 105;
+30 tests / 250 assertions. Focused checker/coverage controls pass 12 / 126;
 the preview suite passes 5 / 25, including no checker annotations in emitted
 HTML. Token comparison preserves CLI, synchronization, filter and syntax-tool
 behavior, allowing mechanical trailing commas; fixer status-variable renaming
@@ -81,3 +81,25 @@ hashes are unchanged. Independent preliminary review found and corrected two
 preview annotation lines accidentally emitted as text; the new render control
 protects that finding. Actual published-pair review and PHP 8.0/8.5 native CI
 remain separate qualification.
+
+
+## Review corrections: persistent suppression and profile identity
+
+The coverage gate rejects every `phpcs:disable` directive in maintained PHP,
+including named categories, individual codes and subsequently re-enabled spans.
+This repository uses occurrence-local `phpcs:ignore` exceptions; its current
+sources need no persistent disables. Exact local ignores remain accepted.
+
+Coverage paths and exclusions are retained separately per ruleset. Resources
+must be covered by the resource profile; CLI, tools, tests and previews must be
+covered by the standalone tooling profile. Resource coverage cannot compensate
+for a missing or excluded tooling path, so WordPress polyfills cannot silently
+replace the required full native compatibility checks. Regression controls cover
+both tests and previews covered only by the resource ruleset, tooling exclusions
+masked by resource coverage, and named/pairwise re-enabled disable directives.
+
+
+Corrected canonical checks pass 30 tests / 250 assertions; focused coverage
+checks pass 6 / 74. Differential controls reproduce the old category-disable,
+resource-only test and resource-only preview bypasses, and reject all three with
+the corrected guard. A tooling exclusion remains rejected under both versions.

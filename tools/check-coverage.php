@@ -35,7 +35,9 @@ try {
 	$standards_paths      = array();
 	$standards_exclusions = array();
 	foreach ( array( 'phpcs.xml.dist', 'phpcs-tooling.xml.dist' ) as $ruleset ) {
-		$document = new DOMDocument();
+		$standards_paths[ $ruleset ]      = array();
+		$standards_exclusions[ $ruleset ] = array();
+		$document                         = new DOMDocument();
 		if ( ! $document->load( $root . '/' . $ruleset, LIBXML_NONET ) ) {
 			throw new RuntimeException( 'PHPCS ruleset cannot be read: ' . $ruleset );
 		}
@@ -48,10 +50,10 @@ try {
 			// phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase -- Preserve the native DOM/ZipArchive property contract; this is not an owned property.
 			if ( 'file' === $entry->nodeName ) {
 				// phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase -- Preserve the native DOM/ZipArchive property contract; this is not an owned property.
-				$standards_paths[] = trim( $entry->textContent );
+				$standards_paths[ $ruleset ][] = trim( $entry->textContent );
 			// phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase -- Preserve the native DOM/ZipArchive property contract; this is not an owned property.
 			} elseif ( 'exclude-pattern' === $entry->nodeName && $entry instanceof DOMElement ) {
-				$standards_exclusions[] = array(
+				$standards_exclusions[ $ruleset ][] = array(
 					// phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase -- Preserve the native DOM/ZipArchive property contract; this is not an owned property.
 					'pattern' => trim( $entry->textContent ),
 					'type'    => $entry->getAttribute( 'type' ),
@@ -59,7 +61,7 @@ try {
 			}
 		}
 	}
-	if ( ! $standards_paths ) {
+	if ( ! array_filter( $standards_paths ) ) {
 		throw new RuntimeException( 'PHPCS has no source paths.' );
 	}
 
@@ -113,14 +115,15 @@ try {
 			throw new RuntimeException( 'Cannot inspect maintained PHP: ' . $maintained_path );
 		}
 		foreach ( token_get_all( $source ) as $token ) {
-			if ( is_array( $token ) && in_array( $token[0], array( T_COMMENT, T_DOC_COMMENT ), true ) && preg_match( '~(?:@codingStandardsIgnore\w*|phpcs:ignoreFile|phpcs:(?:ignore|disable)[ \t]*(?:--[^\r\n]*)?(?:\*/)?[ \t]*$)~m', $token[1] ) ) {
-				throw new RuntimeException( 'Blanket or legacy standards suppression: ' . $maintained_path );
+			if ( is_array( $token ) && in_array( $token[0], array( T_COMMENT, T_DOC_COMMENT ), true ) && preg_match( '~(?:@codingStandardsIgnore\w*|phpcs:ignoreFile|phpcs:disable\b|phpcs:ignore[ \t]*(?:--[^\r\n]*)?(?:\*/)?[ \t]*$)~m', $token[1] ) ) {
+				throw new RuntimeException( 'Blanket, persistent or legacy standards suppression: ' . $maintained_path );
 			}
 		}
-		if ( ! covered_by( $maintained_path, $standards_paths, $root ) ) {
-			throw new RuntimeException( 'PHPCS does not cover: ' . $maintained_path );
+		$required_ruleset = 0 === strpos( $maintained_path, 'resources/' ) ? 'phpcs.xml.dist' : 'phpcs-tooling.xml.dist';
+		if ( ! covered_by( $maintained_path, $standards_paths[ $required_ruleset ], $root ) ) {
+			throw new RuntimeException( 'PHPCS does not cover: ' . $maintained_path . ' in ' . $required_ruleset );
 		}
-		if ( excluded_by_phpcs( $maintained_path, $standards_exclusions, $root ) ) {
+		if ( excluded_by_phpcs( $maintained_path, $standards_exclusions[ $required_ruleset ], $root ) ) {
 			throw new RuntimeException( 'PHPCS excludes maintained PHP: ' . $maintained_path );
 		}
 	}
