@@ -272,6 +272,36 @@ file_get_contents( 'fixture' );
 		$this->assertSame( 0, $status, $output );
 	}
 
+	public function test_conditional_xml_elements_cannot_disable_checker_rules(): void {
+		$code  = 'WordPress.WP.AlternativeFunctions.json_encode_json_encode';
+		$rules = '<ruleset><file>resources</file><rule ref="RANWordPressLibrary"/></ruleset>';
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Inspect inert native JSON input with the real locked checker.
+		file_put_contents( $this->root . '/resources/probe.php', '<?php json_encode( array() );' );
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Establish the shared-profile diagnostic before mutating its conditional attributes.
+		file_put_contents( $this->root . '/phpcs.xml.dist', $rules );
+		list( $status, $output ) = $this->check_coverage( true );
+		$this->assertNotSame( 0, $status, $output );
+		$this->assertStringContainsString( $code, $output );
+		foreach ( array( 'phpcbf-only="true"', 'phpcs-only="false"' ) as $condition ) {
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Reproduce PHPCS skipping the otherwise required shared rule.
+			file_put_contents( $this->root . '/phpcs.xml.dist', str_replace( 'ref="RANWordPressLibrary"', 'ref="RANWordPressLibrary" ' . $condition, $rules ) );
+			list( $status, $output ) = $this->check_coverage( true );
+			$this->assertStringNotContainsString( $code, $output );
+			list( $status, $output ) = $this->check_coverage();
+			$this->assertNotSame( 0, $status, $output );
+			$this->assertStringContainsString( 'PHPCS conditional element needs review: phpcs.xml.dist', $output );
+		}
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Restore the normal resource rule before probing other profile elements.
+		file_put_contents( $this->root . '/phpcs.xml.dist', $rules );
+		foreach ( array( '<ruleset phpcbf-only="true"><file>bin/ran-admin-shell</file><file>tools</file></ruleset>', '<ruleset><file phpcs-only="false">bin/ran-admin-shell</file><file>tools</file></ruleset>' ) as $mutation ) {
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Conditional selection must be rejected across both owned XML profiles and element types.
+			file_put_contents( $this->root . '/phpcs-tooling.xml.dist', $mutation );
+			list( $status, $output ) = $this->check_coverage();
+			$this->assertNotSame( 0, $status, $output );
+			$this->assertStringContainsString( 'PHPCS conditional element needs review: phpcs-tooling.xml.dist', $output );
+		}
+	}
+
 	public function test_nonstandard_php_entrypoints_cannot_escape_discovery(): void {
 		foreach ( array( 'resources/NewSource.PHP', 'tools/future-command', 'tests/future.inc' ) as $path ) {
 			if ( ! is_dir( dirname( $this->root . '/' . $path ) ) ) {

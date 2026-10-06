@@ -159,3 +159,18 @@ Local PHPCS arguments are restricted to the current presentation options and the
 reviewed standalone filter; actual checker controls reproduce and reject exclude,
 sniffs and ignore argument bypasses. This does not change resource bytes, locked
 dependencies or the seven-path production analysis boundary.
+
+
+## Conditional XML selection correction
+
+A locked-checker probe against PR #23 head `7a11aa397ccb9d995aee7cdc1eb80c61c7d3125a`
+showed that `phpcbf-only="true"` on the shared resource rule removes the native
+JSON diagnostic while the coverage guard still passes. The existing guard now
+rejects `phpcs-only` and `phpcbf-only` attributes on every owned XML element in
+both profiles. Real-checker controls establish the original diagnostic, reproduce
+both conditional rule bypasses, and require independent coverage rejection.
+Additional root/file-element probes protect the tooling profile. Existing
+include-pattern rejection and all accepted source exceptions remain unchanged.
+This repair changes only quality tooling, its regression and this record; resource,
+runtime and dependency bytes are unchanged. Exact-candidate independent review
+and native CI remain required before disposition; no merge is authorized here.

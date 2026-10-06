@@ -36,6 +36,11 @@ try {
 		if ( ! $document->load( $root . '/' . $ruleset, LIBXML_NONET ) ) {
 			throw new RuntimeException( 'PHPCS ruleset cannot be read: ' . $ruleset );
 		}
+		foreach ( $document->getElementsByTagName( '*' ) as $element ) {
+			if ( $element->hasAttribute( 'phpcs-only' ) || $element->hasAttribute( 'phpcbf-only' ) ) {
+				throw new RuntimeException( 'PHPCS conditional element needs review: ' . $ruleset );
+			}
+		}
 		foreach ( $document->getElementsByTagName( 'arg' ) as $argument ) {
 			$name  = $argument->getAttribute( 'name' );
 			$value = $argument->getAttribute( 'value' );
