@@ -4,7 +4,8 @@
 require_once dirname( __DIR__ ) . '/tests/bootstrap.php';
 
 $cases = require __DIR__ . '/cases.php';
-$case  = isset( $_GET['case'] ) && is_string( $_GET['case'] ) && isset( $cases[ $_GET['case'] ] ) ? $_GET['case'] : 'name-only';
+// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only browser preview selects an existing allowlisted fixture key and performs no protected mutation.
+$case            = isset( $_GET['case'] ) && is_string( $_GET['case'] ) && isset( $cases[ $_GET['case'] ] ) ? $_GET['case'] : 'name-only';
 $ran_admin_shell = $cases[ $case ];
 ?><!doctype html>
 <html lang="en"<?php echo 'rtl' === $case ? ' dir="rtl"' : ''; ?>>
@@ -12,6 +13,7 @@ $ran_admin_shell = $cases[ $case ];
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1" />
 	<title>RAN Admin Shell — <?php echo esc_html( $case ); ?></title>
+	<?php // phpcs:ignore WordPress.WP.EnqueuedResources.NonEnqueuedStylesheet -- Standalone preview has no WordPress enqueue lifecycle; this fixed local stylesheet is its fixture resource. ?>
 	<link rel="stylesheet" href="../resources/admin-shell.css" />
 	<style>
 		body { background: #f0f0f1; color: #1d2327; font: 14px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; margin: 0; }
@@ -27,7 +29,10 @@ $ran_admin_shell = $cases[ $case ];
 		<?php endforeach; ?>
 	</nav>
 	<main class="fixture-canvas">
-		<?php include dirname( __DIR__ ) . '/resources/admin-shell.php'; ?>
+		<?php
+		// phpcs:ignore PEAR.Files.IncludingFile.UseRequire -- Preserve the preview template include behavior while exercising the authoritative renderer.
+		include dirname( __DIR__ ) . '/resources/admin-shell.php';
+		?>
 		<div class="postbox" style="background:#fff;border:1px solid #c3c4c7;padding:20px">Consumer-owned page content</div>
 	</main>
 </body>

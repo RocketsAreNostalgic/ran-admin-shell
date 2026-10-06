@@ -32,3 +32,27 @@ If CI fails, inspect GitHub Actions logs directly and diagnose/fix the failure y
 
 This prohibition is a cost-control requirement and must not be overridden by convenience,
 CI failure, review comments, or suggestions from GitHub/Blacksmith UI.
+
+
+## Maintained PHP profiles
+
+Common WordPress-derived formatting, owned snake_case naming and Yoda conditions
+apply to all maintained PHP, including tools, tests, preview fixtures and the
+extensionless Composer CLI. RANOwnedMethods covers inherited owned declarations.
+Preserve the exact PHPUnit/PHPCS overrides and native DOM/ZipArchive properties
+with declaration/occurrence-local diagnostic reasons; ordinary helpers are owned.
+
+Resources retain RANWordPressLibrary and PHPCompatibilityWP. Standalone tooling,
+tests and previews use RAN plus WordPress-Extra conventions and full native
+PHPCompatibility: WordPress polyfills must not mask PHP 8.0 incompatibilities.
+Keep check/fix scopes aligned and the real-binary controls meaningful. Native
+filesystem/stream/process operations, immutable JSON bytes and internal exception
+data retain exact local reasons, never blanket category waivers. Read-only preview
+selection uses its existing allowlist and does not require a mutation nonce.
+
+`check:coverage` accounts for all maintained PHP standards paths while preserving
+the production-only PHPStan boundary, and rejects blanket/legacy suppression
+comments without executing source. Preserve resource bytes, immutable reference
+checks, destination/link fences, atomic replacement, cleanup and consumer removal
+proofs. Read docs/quality-acceptance.md before widening these boundaries. No package
+publication or consumer lock/provenance update follows from profile acceptance.

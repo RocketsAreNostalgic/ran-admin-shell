@@ -26,6 +26,7 @@ if ( ! function_exists( 'esc_url' ) ) {
 
 if ( ! function_exists( 'wp_json_encode' ) ) {
 	function wp_json_encode( $value, $flags = 0 ) {
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.json_encode_json_encode -- Controlled WordPress JSON stub delegates to native JSON without calling itself recursively.
 		return json_encode( $value, $flags );
 	}
 }

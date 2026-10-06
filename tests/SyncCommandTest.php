@@ -8,11 +8,15 @@ final class SyncCommandTest extends TestCase {
 	/** Temporary consumer root. */
 	private $root;
 
+	// phpcs:ignore RANOwnedMethods.NamingConventions.ValidMethodName.NotSnakeCase -- Required PHPUnit lifecycle override.
 	protected function setUp(): void {
 		$this->root = sys_get_temp_dir() . '/ran-admin-shell-' . bin2hex( random_bytes( 8 ) );
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_mkdir -- Create native directories for standalone synchronization or the isolated fixture; retain mode and existence checks.
 		mkdir( $this->root, 0777, true );
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Write exact bytes to the owned native temporary/fixture path; preserve filesystem and distribution observations.
 		file_put_contents(
 			$this->root . '/ran-admin-shell.json',
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.json_encode_json_encode -- Native JSON preserves the standalone serialization flags and bytes without loading WordPress.
 			json_encode(
 				array(
 					'schema'     => 1,
@@ -23,8 +27,10 @@ final class SyncCommandTest extends TestCase {
 				JSON_PRETTY_PRINT
 			)
 		);
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Write exact bytes to the owned native temporary/fixture path; preserve filesystem and distribution observations.
 		file_put_contents(
 			$this->root . '/composer.lock',
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.json_encode_json_encode -- Native JSON preserves the standalone serialization flags and bytes without loading WordPress.
 			json_encode(
 				array(
 					'packages'     => array(),
@@ -32,7 +38,11 @@ final class SyncCommandTest extends TestCase {
 						array(
 							'name'    => 'ran/admin-shell',
 							'version' => 'dev-main',
-							'source'  => array( 'type' => 'git', 'url' => 'https://github.com/RocketsAreNostalgic/ran-admin-shell.git', 'reference' => str_repeat( 'a', 40 ) ),
+							'source'  => array(
+								'type'      => 'git',
+								'url'       => 'https://github.com/RocketsAreNostalgic/ran-admin-shell.git',
+								'reference' => str_repeat( 'a', 40 ),
+							),
 						),
 					),
 				)
@@ -40,6 +50,7 @@ final class SyncCommandTest extends TestCase {
 		);
 	}
 
+	// phpcs:ignore RANOwnedMethods.NamingConventions.ValidMethodName.NotSnakeCase -- Required PHPUnit lifecycle override.
 	protected function tearDown(): void {
 		$this->remove_tree( $this->root );
 	}
@@ -52,12 +63,16 @@ final class SyncCommandTest extends TestCase {
 		$this->assertTrue( SyncCommand::check( $config, false ) );
 		$this->assertStringContainsString(
 			"if ( ! defined( 'ABSPATH' ) ) {\n\texit;\n}",
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Read exact native file bytes for standalone configuration, immutable resource verification or isolated fixture evidence.
 			(string) file_get_contents( $config['php'] )
 		);
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Read exact native file bytes for standalone configuration, immutable resource verification or isolated fixture evidence.
 		$first = file_get_contents( $config['provenance'] );
 		SyncCommand::sync( $config );
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Read exact native file bytes for standalone configuration, immutable resource verification or isolated fixture evidence.
 		$this->assertSame( $first, file_get_contents( $config['provenance'] ) );
 
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Write exact bytes to the owned native temporary/fixture path; preserve filesystem and distribution observations.
 		file_put_contents( $config['css'], 'drift', FILE_APPEND );
 		$this->assertFalse( SyncCommand::check( $config, false ) );
 	}
@@ -74,9 +89,18 @@ final class SyncCommandTest extends TestCase {
 
 	/** CLI rejects path traversal. */
 	public function test_traversal_configuration_is_rejected() {
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Write exact bytes to the owned native temporary/fixture path; preserve filesystem and distribution observations.
 		file_put_contents(
 			$this->root . '/unsafe.json',
-			json_encode( array( 'schema' => 1, 'php' => '../outside.php', 'css' => 'assets/a.css', 'provenance' => 'provenance.json' ) )
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.json_encode_json_encode -- Native JSON preserves the standalone serialization flags and bytes without loading WordPress.
+			json_encode(
+				array(
+					'schema'     => 1,
+					'php'        => '../outside.php',
+					'css'        => 'assets/a.css',
+					'provenance' => 'provenance.json',
+				)
+			)
 		);
 
 		$this->assertSame( 2, SyncCommand::main( array( 'ran-admin-shell', 'check', '--config=' . $this->root . '/unsafe.json' ) ) );
@@ -84,17 +108,21 @@ final class SyncCommandTest extends TestCase {
 
 	/** Missing CLI arguments produce an intentional failure, not an undefined-variable error. */
 	public function test_cli_rejects_unavailable_arguments(): void {
-		$log = $this->root . '/cli.log';
+		$log     = $this->root . '/cli.log';
 		$wrapper = $this->root . '/without-argv.php';
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents, WordPress.PHP.DevelopmentFunctions.error_log_var_export -- Write exact bytes to the owned native temporary/fixture path; preserve filesystem and distribution observations. Encode a controlled local path as PHP source for the isolated subprocess fixture; not debug output.
 		file_put_contents( $wrapper, '<?php unset($argv); require ' . var_export( dirname( __DIR__ ) . '/bin/ran-admin-shell', true ) . ';' );
+		// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.system_calls_proc_open -- Run the existing isolated CLI/checker command with its argument vector and observed exit status.
 		$process = proc_open(
 			array( PHP_BINARY, $wrapper ),
 			array( array( 'pipe', 'r' ), array( 'file', $log, 'w' ), array( 'file', $log, 'a' ) ),
 			$pipes
 		);
 		$this->assertIsResource( $process );
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose -- Close the owned subprocess pipe; WordPress filesystem wrappers do not own this stream.
 		fclose( $pipes[0] );
 		$this->assertSame( 2, proc_close( $process ) );
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Read exact native file bytes for standalone configuration, immutable resource verification or isolated fixture evidence.
 		$this->assertSame( "RAN Admin Shell requires registered CLI arguments (register_argc_argv).\n", file_get_contents( $log ) );
 	}
 
@@ -110,8 +138,10 @@ final class SyncCommandTest extends TestCase {
 		}
 		$items = new RecursiveIteratorIterator( new RecursiveDirectoryIterator( $path, FilesystemIterator::SKIP_DOTS ), RecursiveIteratorIterator::CHILD_FIRST );
 		foreach ( $items as $item ) {
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_rmdir, WordPress.WP.AlternativeFunctions.unlink_unlink -- Remove owned native fixture/temporary entries with the existing link and cleanup boundaries.
 			$item->isDir() ? rmdir( $item->getPathname() ) : unlink( $item->getPathname() );
 		}
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_rmdir -- Remove owned native fixture/temporary entries with the existing link and cleanup boundaries.
 		rmdir( $path );
 	}
 }

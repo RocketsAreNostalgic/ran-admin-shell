@@ -4,11 +4,20 @@
 	<file>bin/ran-admin-shell</file>
 	<file>tools</file>
 	<file>tests</file>
+	<file>fixtures</file>
 	<exclude-pattern>vendor/*</exclude-pattern>
 	<arg name="filter" value="tools/StandardsFilter.php"/>
 	<arg name="basepath" value="."/>
 	<arg value="sp"/>
 	<config name="testVersion" value="8.0-"/>
 	<rule ref="RAN"/>
+	<!-- Common WordPress-derived conventions without PHPCompatibilityWP polyfills:
+	     these entrypoints run before or without WordPress. Keep full PHPCompatibility. -->
+	<rule ref="WordPress-Extra">
+		<!-- Preserve the shared RAN Composer/PSR-4 class-file convention. -->
+		<exclude name="WordPress.Files.FileName.NotHyphenatedLowercase"/>
+		<exclude name="WordPress.Files.FileName.InvalidClassFileName"/>
+	</rule>
+	<rule ref="RANOwnedMethods"/>
 	<rule ref="PHPCompatibility"/>
 </ruleset>
