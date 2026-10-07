@@ -150,18 +150,21 @@ try {
 		throw new RuntimeException( 'PHPCS has no source paths.' );
 	}
 
+	// A genuine leading XML declaration is data; any subsequent opening tag still needs review.
+	$xml_declaration      = '~\A(?:\xEF\xBB\xBF)?<\?xml[ \t\r\n]+version[ \t\r\n]*=[ \t\r\n]*(?:"1\.[01]"|\'1\.[01]\')(?:[ \t\r\n]+encoding[ \t\r\n]*=[ \t\r\n]*(?:"[A-Za-z][A-Za-z0-9._-]*"|\'[A-Za-z][A-Za-z0-9._-]*\'))?(?:[ \t\r\n]+standalone[ \t\r\n]*=[ \t\r\n]*(?:"(?:yes|no)"|\'(?:yes|no)\'))?[ \t\r\n]*\?>~';
 	$maintained           = array();
 	$excluded_directories = array( '.git', '.phpstan-cache', '.phpunit.cache', 'vendor', 'node_modules' );
 	$directory            = new RecursiveDirectoryIterator( $root, FilesystemIterator::SKIP_DOTS );
 	$filter               = new RecursiveCallbackFilterIterator(
 		$directory,
-		static function ( $file ) use ( $excluded_directories, $root ) {
+		static function ( $file ) use ( $excluded_directories, $root, $xml_declaration ) {
 			$relative   = substr( $file->getPathname(), strlen( $root ) + 1 );
 			$linked_php = false;
 			if ( $file->isLink() && $file->isFile() && ! in_array( $relative, $excluded_directories, true ) ) {
-				// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Inspect only an inert bounded link-target header; never execute source or recursively follow linked directories.
-				$header     = file_get_contents( $file->getPathname(), false, null, 0, 512 );
-				$linked_php = is_string( $header ) && preg_match( '/\A(?:#![^\r\n]*\R)?\s*<\?(?:php(?:\s|$)|=)/i', $header );
+				// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Inspect inert link-target bytes; never execute source or recursively follow linked directories.
+				$header     = file_get_contents( $file->getPathname() );
+				$header     = is_string( $header ) ? preg_replace( $xml_declaration, '', $header ) : '';
+				$linked_php = preg_match( '/<\?/', $header ?? '' );
 			}
 			if ( $file->isLink() && ! in_array( $relative, $excluded_directories, true )
 				&& ( $linked_php || $file->isDir() || in_array( strtolower( $file->getExtension() ), array( '', 'php', 'phtml', 'inc', 'html', 'htm' ), true ) ) ) {
@@ -177,15 +180,18 @@ try {
 		}
 		$relative  = str_replace( '\\', '/', substr( $file->getPathname(), strlen( $root ) + 1 ) );
 		$extension = strtolower( $file->getExtension() );
-		// Templates and extensionless commands can contain PHP after arbitrarily long HTML.
-		// Document/data extensions retain header-only detection so quoted PHP examples stay inert.
-		$template = in_array( $extension, array( '', 'phtml', 'inc', 'html', 'htm' ), true );
+		// Unknown source suffixes need the same complete discovery as known templates.
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Inspect inert candidate bytes without executing templates; templates require complete preamble discovery.
-		$contents = $template ? file_get_contents( $file->getPathname() ) : file_get_contents( $file->getPathname(), false, null, 0, 512 );
+		$contents = file_get_contents( $file->getPathname() );
 		if ( false === $contents ) {
 			throw new RuntimeException( 'Cannot inspect maintained candidate: ' . $relative );
 		}
-		$opening = $template ? '/<\?(?:php(?:\s|$)|=)/i' : '/\A(?:#![^\r\n]*\R)?\s*<\?(?:php(?:\s|$)|=)/i';
+		// Quoted examples in Markdown, valid JSON and declared Bash scripts remain inert.
+		$inert    = 'md' === $extension
+			|| ( 'json' === $extension && null !== json_decode( $contents ) && JSON_ERROR_NONE === json_last_error() )
+			|| ( 'sh' === $extension && 1 === preg_match( '~\A#!(?:/usr/bin/env[ \t]+bash|/bin/bash)(?:[ \t][^\r\n]*)?\r?\n~', $contents ) );
+		$contents = preg_replace( $xml_declaration, '', $contents ) ?? $contents;
+		$opening  = ! $inert ? '/<\?/' : '/\A(?:\xEF\xBB\xBF)?(?:#![^\r\n]*\R)?\s*<\?/';
 		if ( in_array( $extension, array( 'php', 'phtml' ), true ) || preg_match( $opening, $contents ) ) {
 			if ( 'php' !== $file->getExtension() && 'bin/ran-admin-shell' !== $relative ) {
 				throw new RuntimeException( 'PHP entrypoint requires explicit checker support: ' . $relative );
