@@ -94,6 +94,20 @@ try {
 			|| 2 !== $compatibility->item( 0 )->attributes->length ) {
 			throw new RuntimeException( 'PHPCS compatibility target must remain 8.0-: ' . $ruleset );
 		}
+		if ( 'phpcs.xml.dist' === $ruleset ) {
+			$wp_floor = $xpath->query( '//config[@name="minimum_wp_version" or @name="minimum_supported_wp_version"]' );
+			if ( 1 !== count( $wp_floor ) || ! $wp_floor->item( 0 ) instanceof DOMElement
+				|| 'minimum_wp_version' !== $wp_floor->item( 0 )->getAttribute( 'name' )
+				|| '6.5' !== $wp_floor->item( 0 )->getAttribute( 'value' ) || 2 !== $wp_floor->item( 0 )->attributes->length ) {
+				throw new RuntimeException( 'PHPCS WordPress compatibility floor must remain 6.5.' );
+			}
+		} else {
+			$cli_filter = $xpath->query( '/ruleset/arg[@name="filter"]' );
+			if ( 1 !== count( $cli_filter ) || ! $cli_filter->item( 0 ) instanceof DOMElement
+				|| 'tools/StandardsFilter.php' !== $cli_filter->item( 0 )->getAttribute( 'value' ) || 2 !== $cli_filter->item( 0 )->attributes->length ) {
+				throw new RuntimeException( 'PHPCS requires its sole extensionless CLI filter.' );
+			}
+		}
 		$root_exclusions = $xpath->query( '/ruleset/exclude-pattern' );
 		if ( 1 !== count( $root_exclusions ) || 'vendor/*' !== (string) $root_exclusions->item( 0 )->nodeValue
 			|| 0 !== $root_exclusions->item( 0 )->attributes->length ) {
@@ -129,8 +143,15 @@ try {
 	$filter               = new RecursiveCallbackFilterIterator(
 		$directory,
 		static function ( $file ) use ( $excluded_directories, $root ) {
-			$relative = substr( $file->getPathname(), strlen( $root ) + 1 );
-			if ( $file->isLink() && 'php' === strtolower( $file->getExtension() ) ) {
+			$relative   = substr( $file->getPathname(), strlen( $root ) + 1 );
+			$linked_php = false;
+			if ( $file->isLink() && $file->isFile() && ! in_array( $relative, $excluded_directories, true ) ) {
+				// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Inspect only an inert bounded link-target header; never execute source or recursively follow linked directories.
+				$header     = file_get_contents( $file->getPathname(), false, null, 0, 512 );
+				$linked_php = is_string( $header ) && preg_match( '/\A(?:#![^\r\n]*\R)?\s*<\?(?:php(?:\s|$)|=)/i', $header );
+			}
+			if ( $file->isLink() && ! in_array( $relative, $excluded_directories, true )
+				&& ( $linked_php || $file->isDir() || in_array( strtolower( $file->getExtension() ), array( '', 'php', 'phtml', 'inc', 'html', 'htm' ), true ) ) ) {
 				// phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Internal standalone CLI exception data; the CLI reports it to STDERR, not HTML.
 				throw new RuntimeException( 'Maintained PHP is a symbolic link: ' . $relative );
 			}

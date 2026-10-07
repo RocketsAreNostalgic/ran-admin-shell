@@ -52,6 +52,21 @@ final class StandardsContractTest extends TestCase {
 		$this->assertStringContainsString( 'PHPCompatibility.FunctionUse.RemovedFunctions', $output );
 	}
 
+	public function test_removing_filter_hides_actual_cli_diagnostic(): void {
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- The unsupported native call remains inert while the locked checker observes CLI selection.
+		file_put_contents( $this->root . '/bin/ran-admin-shell', '<?php each( array() );' );
+		list( $status, $output ) = $this->run_standard( 'phpcs', false );
+		$this->assertNotSame( 0, $status );
+		$this->assertStringContainsString( 'PHPCompatibility.FunctionUse.RemovedFunctions', $output );
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Preserve the isolated tooling profile for the filter-removal control.
+		$profile = file_get_contents( $this->root . '/phpcs.xml.dist' );
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Remove only the custom filter to demonstrate why the independent guard must require it.
+		file_put_contents( $this->root . '/phpcs.xml.dist', str_replace( '<arg name="filter" value="tools/StandardsFilter.php"/>', '', $profile ) );
+		list( $status, $output ) = $this->run_standard( 'phpcs', false );
+		$this->assertSame( 0, $status, $output );
+		$this->assertStringNotContainsString( 'PHPCompatibility.FunctionUse.RemovedFunctions', $output );
+	}
+
 	public function test_standalone_cli_cannot_rely_on_wordpress_polyfills(): void {
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Write exact bytes to the owned native temporary/fixture path; preserve filesystem and distribution observations.
 		file_put_contents( $this->root . '/bin/ran-admin-shell', '<?php array_is_list( array() );' );

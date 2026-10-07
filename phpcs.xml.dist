@@ -6,7 +6,7 @@
 	<arg name="basepath" value="."/>
 	<arg name="colors"/>
 	<arg value="sp"/>
-	<config name="minimum_supported_wp_version" value="6.5"/>
+	<config name="minimum_wp_version" value="6.5"/>
 	<config name="testVersion" value="8.0-"/>
 	<rule ref="RANWordPressLibrary"/>
 	<rule ref="RANOwnedMethods"/>

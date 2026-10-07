@@ -24,9 +24,9 @@ final class CoverageContractTest extends TestCase {
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Write exact bytes to the owned native temporary/fixture path; preserve filesystem and distribution observations.
 		file_put_contents( $this->root . '/phpstan.neon.dist', "parameters:\n    level: 5\n    phpVersion: 80000\n    paths:\n        - bin/ran-admin-shell\n        - resources\n        - tools\n" );
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Write exact bytes to the owned native temporary/fixture path; preserve filesystem and distribution observations.
-		file_put_contents( $this->root . '/phpcs.xml.dist', '<ruleset><config name="testVersion" value="8.0-"/><file>resources</file><rule ref="RANWordPressLibrary"/><rule ref="RANOwnedMethods"/><exclude-pattern>vendor/*</exclude-pattern></ruleset>' );
+		file_put_contents( $this->root . '/phpcs.xml.dist', '<ruleset><config name="minimum_wp_version" value="6.5"/><config name="testVersion" value="8.0-"/><file>resources</file><rule ref="RANWordPressLibrary"/><rule ref="RANOwnedMethods"/><exclude-pattern>vendor/*</exclude-pattern></ruleset>' );
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Write exact bytes to the owned native temporary/fixture path; preserve filesystem and distribution observations.
-		file_put_contents( $this->root . '/phpcs-tooling.xml.dist', '<ruleset><config name="testVersion" value="8.0-"/><file>bin/ran-admin-shell</file><file>tools</file><rule ref="RAN"/><rule ref="WordPress-Extra"/><rule ref="RANOwnedMethods"/><rule ref="PHPCompatibility"/><exclude-pattern>vendor/*</exclude-pattern></ruleset>' );
+		file_put_contents( $this->root . '/phpcs-tooling.xml.dist', '<ruleset><arg name="filter" value="tools/StandardsFilter.php"/><config name="testVersion" value="8.0-"/><file>bin/ran-admin-shell</file><file>tools</file><rule ref="RAN"/><rule ref="WordPress-Extra"/><rule ref="RANOwnedMethods"/><rule ref="PHPCompatibility"/><exclude-pattern>vendor/*</exclude-pattern></ruleset>' );
 	}
 
 	// phpcs:ignore RANOwnedMethods.NamingConventions.ValidMethodName.NotSnakeCase -- Required PHPUnit lifecycle override.
@@ -82,12 +82,12 @@ final class CoverageContractTest extends TestCase {
 
 	public function test_standards_exclusion_fails(): void {
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Write exact bytes to the owned native temporary/fixture path; preserve filesystem and distribution observations.
-		file_put_contents( $this->root . '/phpcs.xml.dist', '<ruleset><config name="testVersion" value="8.0-"/><file>resources</file><rule ref="RANWordPressLibrary"/><rule ref="RANOwnedMethods"/><exclude-pattern>vendor/*</exclude-pattern><exclude-pattern>admin-shell\\.php$</exclude-pattern></ruleset>' );
+		file_put_contents( $this->root . '/phpcs.xml.dist', '<ruleset><config name="minimum_wp_version" value="6.5"/><config name="testVersion" value="8.0-"/><file>resources</file><rule ref="RANWordPressLibrary"/><rule ref="RANOwnedMethods"/><exclude-pattern>vendor/*</exclude-pattern><exclude-pattern>admin-shell\\.php$</exclude-pattern></ruleset>' );
 		list( $status, $output ) = $this->check_coverage();
 		$this->assertNotSame( 0, $status );
 		$this->assertStringContainsString( 'PHPCS root exclusion needs review: phpcs.xml.dist', $output );
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Write exact bytes to the owned native temporary/fixture path; preserve filesystem and distribution observations.
-		file_put_contents( $this->root . '/phpcs.xml.dist', '<ruleset><config name="testVersion" value="8.0-"/><file>resources</file><rule ref="RANWordPressLibrary"/><rule ref="RANOwnedMethods"/><exclude-pattern>vendor/*</exclude-pattern><exclude-pattern type="relative">^resources/.*</exclude-pattern></ruleset>' );
+		file_put_contents( $this->root . '/phpcs.xml.dist', '<ruleset><config name="minimum_wp_version" value="6.5"/><config name="testVersion" value="8.0-"/><file>resources</file><rule ref="RANWordPressLibrary"/><rule ref="RANOwnedMethods"/><exclude-pattern>vendor/*</exclude-pattern><exclude-pattern type="relative">^resources/.*</exclude-pattern></ruleset>' );
 		list( $status, $output ) = $this->check_coverage();
 		$this->assertNotSame( 0, $status );
 		$this->assertStringContainsString( 'PHPCS root exclusion needs review: phpcs.xml.dist', $output );
@@ -177,7 +177,7 @@ final class CoverageContractTest extends TestCase {
 	public function test_case_variants_and_broad_ignores_cannot_hide_real_checker_findings(): void {
 		$code = 'WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents';
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Configure the real locked checker against inert native-operation fixtures.
-		file_put_contents( $this->root . '/phpcs.xml.dist', '<ruleset><config name="testVersion" value="8.0-"/><file>resources</file><rule ref="RANWordPressLibrary"/><rule ref="RANOwnedMethods"/><exclude-pattern>vendor/*</exclude-pattern><rule ref="WordPress.WP.AlternativeFunctions"/></ruleset>' );
+		file_put_contents( $this->root . '/phpcs.xml.dist', '<ruleset><config name="minimum_wp_version" value="6.5"/><config name="testVersion" value="8.0-"/><file>resources</file><rule ref="RANWordPressLibrary"/><rule ref="RANOwnedMethods"/><exclude-pattern>vendor/*</exclude-pattern><rule ref="WordPress.WP.AlternativeFunctions"/></ruleset>' );
 		foreach ( array( '// PHPCS:DISABLE WordPress', '// phpcs:ignorefile', '// phpcs:ignorefileXYZ', '// PHPCS:IGNORE', '// phpcs:ignore WordPress -- Hide a standard.', '// phpcs:ignore WordPress.WP.AlternativeFunctions -- Hide a category.', '// phpcs:ignore ' . $code, '// phpcs:ignore ' . $code . ' -- ', '/* phpcs:ignore ' . $code . ' -- */' ) as $annotation ) {
 			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- The fixture is inspected by PHPCS and coverage, never executed.
 			file_put_contents(
@@ -196,7 +196,7 @@ file_get_contents( 'fixture' );
 	}
 
 	public function test_inline_property_changes_cannot_hide_checker_diagnostics(): void {
-		$rules = '<ruleset><config name="testVersion" value="8.0-"/><file>resources</file><rule ref="RANWordPressLibrary"/><rule ref="RANOwnedMethods"/><exclude-pattern>vendor/*</exclude-pattern><rule ref="WordPress.NamingConventions.PrefixAllGlobals"><properties><property name="prefixes" type="array"><element value="approved"/></property></properties></rule></ruleset>';
+		$rules = '<ruleset><config name="minimum_wp_version" value="6.5"/><config name="testVersion" value="8.0-"/><file>resources</file><rule ref="RANWordPressLibrary"/><rule ref="RANOwnedMethods"/><exclude-pattern>vendor/*</exclude-pattern><rule ref="WordPress.NamingConventions.PrefixAllGlobals"><properties><property name="prefixes" type="array"><element value="approved"/></property></properties></rule></ruleset>';
 		foreach ( array( 'phpcs:set', 'PHPCS:SET', '@codingStandardsChangeSetting', '@CODINGSTANDARDSCHANGESETTING' ) as $directive ) {
 			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Configure the isolated real checker to require the approved prefix.
 			file_put_contents( $this->root . '/phpcs.xml.dist', $rules );
@@ -211,7 +211,7 @@ file_get_contents( 'fixture' );
 			// Locked PHPCS ignores uppercase legacy syntax; the independent guard rejects it too.
 			$this->assertSame( '@CODINGSTANDARDSCHANGESETTING' === $directive ? 1 : 0, $status, $output );
 			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Remove test-only XML customization so rejection must be for the source directive itself.
-			file_put_contents( $this->root . '/phpcs.xml.dist', '<ruleset><config name="testVersion" value="8.0-"/><file>resources</file><rule ref="RANWordPressLibrary"/><rule ref="RANOwnedMethods"/><exclude-pattern>vendor/*</exclude-pattern></ruleset>' );
+			file_put_contents( $this->root . '/phpcs.xml.dist', '<ruleset><config name="minimum_wp_version" value="6.5"/><config name="testVersion" value="8.0-"/><file>resources</file><rule ref="RANWordPressLibrary"/><rule ref="RANOwnedMethods"/><exclude-pattern>vendor/*</exclude-pattern></ruleset>' );
 			list( $status, $output ) = $this->check_coverage();
 			$this->assertNotSame( 0, $status );
 			$this->assertStringContainsString( 'Blanket, persistent or legacy standards suppression: resources/probe.php', $output );
@@ -221,7 +221,7 @@ file_get_contents( 'fixture' );
 	public function test_exact_ignore_with_reason_leaves_next_line_and_other_diagnostics_checked(): void {
 		$code = 'WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents';
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Configure the real checker to observe exact diagnostic boundaries.
-		file_put_contents( $this->root . '/phpcs.xml.dist', '<ruleset><config name="testVersion" value="8.0-"/><file>resources</file><rule ref="RANWordPressLibrary"/><rule ref="RANOwnedMethods"/><exclude-pattern>vendor/*</exclude-pattern><rule ref="WordPress.WP.AlternativeFunctions"/></ruleset>' );
+		file_put_contents( $this->root . '/phpcs.xml.dist', '<ruleset><config name="minimum_wp_version" value="6.5"/><config name="testVersion" value="8.0-"/><file>resources</file><rule ref="RANWordPressLibrary"/><rule ref="RANOwnedMethods"/><exclude-pattern>vendor/*</exclude-pattern><rule ref="WordPress.WP.AlternativeFunctions"/></ruleset>' );
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Emit inert PHP with a justified first read and two unsuppressed native operations.
 		file_put_contents(
 			$this->root . '/resources/probe.php',
@@ -253,7 +253,7 @@ file_get_contents( 'fixture' );
 		);
 		foreach ( array( '<rule ref="WordPress.WP.AlternativeFunctions"><exclude name="' . $code . '"/></rule>', '<rule ref="' . $code . '"><severity>0</severity></rule>', '<rule ref="WordPress.WP.AlternativeFunctions"><exclude-pattern>probe.php</exclude-pattern></rule>' ) as $override ) {
 			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Simulate a local profile waiver without modifying the real or locked shared rulesets.
-			file_put_contents( $this->root . '/phpcs.xml.dist', '<ruleset><config name="testVersion" value="8.0-"/><file>resources</file><rule ref="RANWordPressLibrary"/><rule ref="RANOwnedMethods"/><exclude-pattern>vendor/*</exclude-pattern>' . $override . '</ruleset>' );
+			file_put_contents( $this->root . '/phpcs.xml.dist', '<ruleset><config name="minimum_wp_version" value="6.5"/><config name="testVersion" value="8.0-"/><file>resources</file><rule ref="RANWordPressLibrary"/><rule ref="RANOwnedMethods"/><exclude-pattern>vendor/*</exclude-pattern>' . $override . '</ruleset>' );
 			list( $status, $output ) = $this->check_coverage( true );
 			$this->assertSame( 0, $status, $output );
 			list( $status, $output ) = $this->check_coverage();
@@ -267,7 +267,7 @@ file_get_contents( 'fixture' );
 			mkdir( $this->root . '/' . $directory );
 		}
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Restore the resource profile after the negative XML probes.
-		file_put_contents( $this->root . '/phpcs.xml.dist', '<ruleset><config name="testVersion" value="8.0-"/><file>resources</file><rule ref="RANWordPressLibrary"/><rule ref="RANOwnedMethods"/><exclude-pattern>vendor/*</exclude-pattern></ruleset>' );
+		file_put_contents( $this->root . '/phpcs.xml.dist', '<ruleset><config name="minimum_wp_version" value="6.5"/><config name="testVersion" value="8.0-"/><file>resources</file><rule ref="RANWordPressLibrary"/><rule ref="RANOwnedMethods"/><exclude-pattern>vendor/*</exclude-pattern></ruleset>' );
 		list( $status, $output ) = $this->check_coverage();
 		$this->assertSame( 0, $status, $output );
 	}
@@ -354,7 +354,7 @@ file_get_contents( 'fixture' );
 
 	public function test_conditional_xml_elements_cannot_disable_checker_rules(): void {
 		$code  = 'WordPress.WP.AlternativeFunctions.json_encode_json_encode';
-		$rules = '<ruleset><config name="testVersion" value="8.0-"/><file>resources</file><rule ref="RANWordPressLibrary"/><rule ref="RANOwnedMethods"/><exclude-pattern>vendor/*</exclude-pattern></ruleset>';
+		$rules = '<ruleset><config name="minimum_wp_version" value="6.5"/><config name="testVersion" value="8.0-"/><file>resources</file><rule ref="RANWordPressLibrary"/><rule ref="RANOwnedMethods"/><exclude-pattern>vendor/*</exclude-pattern></ruleset>';
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Inspect inert native JSON input with the real locked checker.
 		file_put_contents( $this->root . '/resources/probe.php', '<?php json_encode( array() );' );
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Establish the shared-profile diagnostic before mutating its conditional attributes.
@@ -446,7 +446,7 @@ file_get_contents( 'fixture' );
 		file_put_contents( $this->root . '/resources/probe.php', "<?php\nfile_get_contents( 'fixture' );\n" );
 		foreach ( array( '<arg name="exclude" value="WordPress.WP.AlternativeFunctions"/>', '<arg name="sniffs" value="Generic.PHP.LowerCaseConstant"/>', '<arg name="ignore" value="*/probe.php"/>' ) as $argument ) {
 			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Demonstrate argument-level checker suppression in the isolated resource ruleset.
-			file_put_contents( $this->root . '/phpcs.xml.dist', '<ruleset><config name="testVersion" value="8.0-"/><file>resources</file><rule ref="RANWordPressLibrary"/><rule ref="RANOwnedMethods"/><exclude-pattern>vendor/*</exclude-pattern><rule ref="WordPress.WP.AlternativeFunctions"/><rule ref="Generic.PHP.LowerCaseConstant"/>' . $argument . '</ruleset>' );
+			file_put_contents( $this->root . '/phpcs.xml.dist', '<ruleset><config name="minimum_wp_version" value="6.5"/><config name="testVersion" value="8.0-"/><file>resources</file><rule ref="RANWordPressLibrary"/><rule ref="RANOwnedMethods"/><exclude-pattern>vendor/*</exclude-pattern><rule ref="WordPress.WP.AlternativeFunctions"/><rule ref="Generic.PHP.LowerCaseConstant"/>' . $argument . '</ruleset>' );
 			list( $status, $output ) = $this->check_coverage( true );
 			$this->assertSame( 0, $status, $output );
 			list( $status, $output ) = $this->check_coverage();
@@ -516,6 +516,65 @@ file_get_contents( 'fixture' );
 			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Quoted PHP examples in documentation and data are not executable maintained templates.
 			file_put_contents( $this->root . '/' . $path, 'Example: <?php echo "documentation";' );
 		}
+		list( $status, $output ) = $this->check_coverage();
+		$this->assertSame( 0, $status, $output );
+	}
+
+	public function test_required_wordpress_floor_and_cli_filter_cannot_disappear(): void {
+		foreach ( array(
+			'phpcs.xml.dist'         => array( '<config name="minimum_wp_version" value="6.5"/>', '<config name="minimum_wp_version" value="7.0"/>', 'PHPCS WordPress compatibility floor must remain 6.5.' ),
+			'phpcs-tooling.xml.dist' => array( '<arg name="filter" value="tools/StandardsFilter.php"/>', '', 'PHPCS requires its sole extensionless CLI filter.' ),
+		) as $ruleset => $control ) {
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Preserve the isolated profile while testing required configuration multiplicity and values.
+			$original = file_get_contents( $this->root . '/' . $ruleset );
+			foreach ( array( '', $control[1], $control[0] . $control[0] ) as $replacement ) {
+				// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Mutate only the isolated required configuration element.
+				file_put_contents( $this->root . '/' . $ruleset, str_replace( $control[0], $replacement, $original ) );
+				list( $status, $output ) = $this->check_coverage();
+				$this->assertSame( 1, $status );
+				$this->assertStringContainsString( $control[2], $output );
+			}
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Restore the accepted profile before testing the other profile.
+			file_put_contents( $this->root . '/' . $ruleset, $original );
+		}
+	}
+
+	public function test_active_wordpress_floor_controls_real_deprecation_severity(): void {
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Preserve the isolated resource profile for the active-key versus obsolete-key diagnostic control.
+		$original = file_get_contents( $this->root . '/phpcs.xml.dist' );
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Probe a known WordPress 6.6 deprecation without executing WordPress.
+		file_put_contents( $this->root . '/resources/probe.php', "<?php\nwp_render_elements_support();\n" );
+		foreach ( array( 'minimum_wp_version', 'minimum_supported_wp_version' ) as $key ) {
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Demonstrate that the obsolete key falls back to the locked checker default rather than enforcing 6.5.
+			file_put_contents( $this->root . '/phpcs.xml.dist', str_replace( 'minimum_wp_version', $key, $original ) );
+			list( $status, $output ) = $this->check_coverage( true );
+			$this->assertNotSame( 0, $status );
+			$report = json_decode( $output, true, 512, JSON_THROW_ON_ERROR );
+			$types  = array();
+			foreach ( $report['files'] as $file ) {
+				foreach ( $file['messages'] as $message ) {
+					if ( 'WordPress.WP.DeprecatedFunctions.wp_render_elements_supportFound' === $message['source'] ) {
+						$types[] = $message['type'];
+					}
+				}
+			}
+			$this->assertSame( array( 'minimum_wp_version' === $key ? 'WARNING' : 'ERROR' ), $types );
+			list( $status, $output ) = $this->check_coverage();
+			$this->assertSame( 'minimum_wp_version' === $key ? 0 : 1, $status, $output );
+		}
+	}
+
+	public function test_linked_templates_cannot_be_pruned_before_discovery(): void {
+		foreach ( array( 'tools/linked.phtml', 'tools/linked', 'tools/linked.inc', 'tools/linked.html', 'tools/linked.htm', 'tools/linked.PHP', 'tools/linked.txt', 'tools/linked-directory' ) as $path ) {
+			symlink( 'tools/linked-directory' === $path ? $this->root . '/resources' : $this->root . '/resources/admin-shell.php', $this->root . '/' . $path );
+			list( $status, $output ) = $this->check_coverage();
+			$this->assertSame( 1, $status );
+			$this->assertStringContainsString( 'Maintained PHP is a symbolic link: ' . $path, $output );
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.unlink_unlink -- Remove only the isolated link, never its target.
+			unlink( $this->root . '/' . $path );
+		}
+		$this->assertFileExists( $this->root . '/resources/admin-shell.php' );
+		symlink( $this->root . '/composer.json', $this->root . '/documentation.md' );
 		list( $status, $output ) = $this->check_coverage();
 		$this->assertSame( 0, $status, $output );
 	}
