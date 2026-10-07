@@ -174,3 +174,25 @@ include-pattern rejection and all accepted source exceptions remain unchanged.
 This repair changes only quality tooling, its regression and this record; resource,
 runtime and dependency bytes are unchanged. Exact-candidate independent review
 and native CI remain required before disposition; no merge is authorized here.
+
+## Mandatory ancestry and preventive root exclusions
+
+An isolated PR #24 mutation replaced the resource `RANWordPressLibrary` rule
+with `Generic.PHP.Syntax`. The old full canonical check still passed, while the
+locked checker stopped reporting unescaped request output and missing nonce
+verification. Coverage alone did not preserve the intended diagnostics.
+
+The existing coverage guard now requires the two resource ancestors and the four
+standalone ancestors already present in their respective profiles. Tests remove
+and replace each mandatory rule, demonstrate the actual security-diagnostic loss
+with valid checker output, and preserve a precise output allowance while rejecting
+its immediately adjacent unescaped output. The two existing tooling filename
+exceptions remain unchanged and their acceptance control remains active.
+
+Both profiles retain exactly their existing `vendor/*` root exclusion without
+attributes. A future-path exclusion previously passed until a matching maintained
+file existed; the independent file-coverage layer then rejected the omission.
+The guard now rejects that unreviewed configuration before file creation, along
+with altered pattern scope or attributes. No actual profile, resource, runtime,
+dependency or accepted source-exception bytes change in this repair. Exact-pair
+independent review and native CI are required; no merge or release is authorized.

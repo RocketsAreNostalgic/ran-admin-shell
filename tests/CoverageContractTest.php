@@ -24,9 +24,9 @@ final class CoverageContractTest extends TestCase {
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Write exact bytes to the owned native temporary/fixture path; preserve filesystem and distribution observations.
 		file_put_contents( $this->root . '/phpstan.neon.dist', "parameters:\n    level: 5\n    paths:\n        - bin/ran-admin-shell\n        - resources\n        - tools\n" );
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Write exact bytes to the owned native temporary/fixture path; preserve filesystem and distribution observations.
-		file_put_contents( $this->root . '/phpcs.xml.dist', '<ruleset><file>resources</file></ruleset>' );
+		file_put_contents( $this->root . '/phpcs.xml.dist', '<ruleset><file>resources</file><rule ref="RANWordPressLibrary"/><rule ref="RANOwnedMethods"/><exclude-pattern>vendor/*</exclude-pattern></ruleset>' );
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Write exact bytes to the owned native temporary/fixture path; preserve filesystem and distribution observations.
-		file_put_contents( $this->root . '/phpcs-tooling.xml.dist', '<ruleset><file>bin/ran-admin-shell</file><file>tools</file></ruleset>' );
+		file_put_contents( $this->root . '/phpcs-tooling.xml.dist', '<ruleset><file>bin/ran-admin-shell</file><file>tools</file><rule ref="RAN"/><rule ref="WordPress-Extra"/><rule ref="RANOwnedMethods"/><rule ref="PHPCompatibility"/><exclude-pattern>vendor/*</exclude-pattern></ruleset>' );
 	}
 
 	// phpcs:ignore RANOwnedMethods.NamingConventions.ValidMethodName.NotSnakeCase -- Required PHPUnit lifecycle override.
@@ -82,15 +82,15 @@ final class CoverageContractTest extends TestCase {
 
 	public function test_standards_exclusion_fails(): void {
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Write exact bytes to the owned native temporary/fixture path; preserve filesystem and distribution observations.
-		file_put_contents( $this->root . '/phpcs.xml.dist', '<ruleset><file>resources</file><exclude-pattern>admin-shell\\.php$</exclude-pattern></ruleset>' );
+		file_put_contents( $this->root . '/phpcs.xml.dist', '<ruleset><file>resources</file><rule ref="RANWordPressLibrary"/><rule ref="RANOwnedMethods"/><exclude-pattern>vendor/*</exclude-pattern><exclude-pattern>admin-shell\\.php$</exclude-pattern></ruleset>' );
 		list( $status, $output ) = $this->check_coverage();
 		$this->assertNotSame( 0, $status );
-		$this->assertStringContainsString( 'PHPCS excludes maintained PHP: resources/admin-shell.php', $output );
+		$this->assertStringContainsString( 'PHPCS root exclusion needs review: phpcs.xml.dist', $output );
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Write exact bytes to the owned native temporary/fixture path; preserve filesystem and distribution observations.
-		file_put_contents( $this->root . '/phpcs.xml.dist', '<ruleset><file>resources</file><exclude-pattern type="relative">^resources/.*</exclude-pattern></ruleset>' );
+		file_put_contents( $this->root . '/phpcs.xml.dist', '<ruleset><file>resources</file><rule ref="RANWordPressLibrary"/><rule ref="RANOwnedMethods"/><exclude-pattern>vendor/*</exclude-pattern><exclude-pattern type="relative">^resources/.*</exclude-pattern></ruleset>' );
 		list( $status, $output ) = $this->check_coverage();
 		$this->assertNotSame( 0, $status );
-		$this->assertStringContainsString( 'PHPCS excludes maintained PHP: resources/admin-shell.php', $output );
+		$this->assertStringContainsString( 'PHPCS root exclusion needs review: phpcs.xml.dist', $output );
 	}
 
 	public function test_analysis_level_cannot_drop_below_five(): void {
@@ -154,7 +154,7 @@ final class CoverageContractTest extends TestCase {
 			file_put_contents( $config, str_replace( '</ruleset>', '<exclude-pattern>' . $directory . '/future.php</exclude-pattern></ruleset>', $tooling_config ) );
 			list( $status, $output ) = $this->check_coverage();
 			$this->assertNotSame( 0, $status );
-			$this->assertStringContainsString( 'PHPCS excludes maintained PHP: ' . $directory . '/future.php', $output );
+			$this->assertStringContainsString( 'PHPCS root exclusion needs review: phpcs-tooling.xml.dist', $output );
 			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Restore the isolated standalone profile for the next scenario.
 			file_put_contents( $config, $tooling_config );
 		}
@@ -177,7 +177,7 @@ final class CoverageContractTest extends TestCase {
 	public function test_case_variants_and_broad_ignores_cannot_hide_real_checker_findings(): void {
 		$code = 'WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents';
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Configure the real locked checker against inert native-operation fixtures.
-		file_put_contents( $this->root . '/phpcs.xml.dist', '<ruleset><file>resources</file><rule ref="WordPress.WP.AlternativeFunctions"/></ruleset>' );
+		file_put_contents( $this->root . '/phpcs.xml.dist', '<ruleset><file>resources</file><rule ref="RANWordPressLibrary"/><rule ref="RANOwnedMethods"/><exclude-pattern>vendor/*</exclude-pattern><rule ref="WordPress.WP.AlternativeFunctions"/></ruleset>' );
 		foreach ( array( '// PHPCS:DISABLE WordPress', '// phpcs:ignorefile', '// phpcs:ignorefileXYZ', '// PHPCS:IGNORE', '// phpcs:ignore WordPress -- Hide a standard.', '// phpcs:ignore WordPress.WP.AlternativeFunctions -- Hide a category.', '// phpcs:ignore ' . $code, '// phpcs:ignore ' . $code . ' -- ', '/* phpcs:ignore ' . $code . ' -- */' ) as $annotation ) {
 			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- The fixture is inspected by PHPCS and coverage, never executed.
 			file_put_contents(
@@ -196,7 +196,7 @@ file_get_contents( 'fixture' );
 	}
 
 	public function test_inline_property_changes_cannot_hide_checker_diagnostics(): void {
-		$rules = '<ruleset><file>resources</file><rule ref="WordPress.NamingConventions.PrefixAllGlobals"><properties><property name="prefixes" type="array"><element value="approved"/></property></properties></rule></ruleset>';
+		$rules = '<ruleset><file>resources</file><rule ref="RANWordPressLibrary"/><rule ref="RANOwnedMethods"/><exclude-pattern>vendor/*</exclude-pattern><rule ref="WordPress.NamingConventions.PrefixAllGlobals"><properties><property name="prefixes" type="array"><element value="approved"/></property></properties></rule></ruleset>';
 		foreach ( array( 'phpcs:set', 'PHPCS:SET', '@codingStandardsChangeSetting', '@CODINGSTANDARDSCHANGESETTING' ) as $directive ) {
 			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Configure the isolated real checker to require the approved prefix.
 			file_put_contents( $this->root . '/phpcs.xml.dist', $rules );
@@ -211,7 +211,7 @@ file_get_contents( 'fixture' );
 			// Locked PHPCS ignores uppercase legacy syntax; the independent guard rejects it too.
 			$this->assertSame( '@CODINGSTANDARDSCHANGESETTING' === $directive ? 1 : 0, $status, $output );
 			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Remove test-only XML customization so rejection must be for the source directive itself.
-			file_put_contents( $this->root . '/phpcs.xml.dist', '<ruleset><file>resources</file></ruleset>' );
+			file_put_contents( $this->root . '/phpcs.xml.dist', '<ruleset><file>resources</file><rule ref="RANWordPressLibrary"/><rule ref="RANOwnedMethods"/><exclude-pattern>vendor/*</exclude-pattern></ruleset>' );
 			list( $status, $output ) = $this->check_coverage();
 			$this->assertNotSame( 0, $status );
 			$this->assertStringContainsString( 'Blanket, persistent or legacy standards suppression: resources/probe.php', $output );
@@ -221,7 +221,7 @@ file_get_contents( 'fixture' );
 	public function test_exact_ignore_with_reason_leaves_next_line_and_other_diagnostics_checked(): void {
 		$code = 'WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents';
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Configure the real checker to observe exact diagnostic boundaries.
-		file_put_contents( $this->root . '/phpcs.xml.dist', '<ruleset><file>resources</file><rule ref="WordPress.WP.AlternativeFunctions"/></ruleset>' );
+		file_put_contents( $this->root . '/phpcs.xml.dist', '<ruleset><file>resources</file><rule ref="RANWordPressLibrary"/><rule ref="RANOwnedMethods"/><exclude-pattern>vendor/*</exclude-pattern><rule ref="WordPress.WP.AlternativeFunctions"/></ruleset>' );
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Emit inert PHP with a justified first read and two unsuppressed native operations.
 		file_put_contents(
 			$this->root . '/resources/probe.php',
@@ -253,7 +253,7 @@ file_get_contents( 'fixture' );
 		);
 		foreach ( array( '<rule ref="WordPress.WP.AlternativeFunctions"><exclude name="' . $code . '"/></rule>', '<rule ref="' . $code . '"><severity>0</severity></rule>', '<rule ref="WordPress.WP.AlternativeFunctions"><exclude-pattern>probe.php</exclude-pattern></rule>' ) as $override ) {
 			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Simulate a local profile waiver without modifying the real or locked shared rulesets.
-			file_put_contents( $this->root . '/phpcs.xml.dist', '<ruleset><file>resources</file>' . $override . '</ruleset>' );
+			file_put_contents( $this->root . '/phpcs.xml.dist', '<ruleset><file>resources</file><rule ref="RANWordPressLibrary"/><rule ref="RANOwnedMethods"/><exclude-pattern>vendor/*</exclude-pattern>' . $override . '</ruleset>' );
 			list( $status, $output ) = $this->check_coverage( true );
 			$this->assertSame( 0, $status, $output );
 			list( $status, $output ) = $this->check_coverage();
@@ -267,14 +267,94 @@ file_get_contents( 'fixture' );
 			mkdir( $this->root . '/' . $directory );
 		}
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Restore the resource profile after the negative XML probes.
-		file_put_contents( $this->root . '/phpcs.xml.dist', '<ruleset><file>resources</file></ruleset>' );
+		file_put_contents( $this->root . '/phpcs.xml.dist', '<ruleset><file>resources</file><rule ref="RANWordPressLibrary"/><rule ref="RANOwnedMethods"/><exclude-pattern>vendor/*</exclude-pattern></ruleset>' );
 		list( $status, $output ) = $this->check_coverage();
 		$this->assertSame( 0, $status, $output );
 	}
 
+	public function test_mandatory_profiles_cannot_be_removed_or_replaced(): void {
+		$profiles = array(
+			'phpcs.xml.dist'         => array( 'RANWordPressLibrary', 'RANOwnedMethods' ),
+			'phpcs-tooling.xml.dist' => array( 'RAN', 'WordPress-Extra', 'RANOwnedMethods', 'PHPCompatibility' ),
+		);
+		foreach ( $profiles as $profile => $rules ) {
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Preserve the isolated healthy profile for each missing-rule mutation.
+			$original = file_get_contents( $this->root . '/' . $profile );
+			foreach ( $rules as $rule ) {
+				foreach ( array( '', '<rule ref="Generic.PHP.Syntax"/>' ) as $replacement ) {
+					// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Remove or replace exactly one required ancestor in the disposable profile.
+					file_put_contents( $this->root . '/' . $profile, str_replace( '<rule ref="' . $rule . '"/>', $replacement, $original ) );
+					list( $status, $output ) = $this->check_coverage();
+					$this->assertNotSame( 0, $status, $output );
+					$this->assertStringContainsString( 'PHPCS mandatory rule missing: ' . $profile . ' ' . $rule, $output );
+				}
+			}
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Restore only this isolated profile before inspecting the other one.
+			file_put_contents( $this->root . '/' . $profile, $original );
+		}
+	}
+
+	public function test_missing_resource_baseline_hides_real_security_diagnostics(): void {
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Mutate only the isolated resource profile while retaining the owned-method rule.
+		$original = file_get_contents( $this->root . '/phpcs.xml.dist' );
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Supply inert unescaped request output to the locked checker without executing it.
+		file_put_contents( $this->root . '/resources/probe.php', "<?php\n// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Controlled preescaped fixture.\necho \$preescaped;\necho \$_GET['x'];\n" );
+		list( $status, $output ) = $this->check_coverage( true );
+		$this->assertNotSame( 0, $status, $output );
+		$baseline = json_decode( $output, true, 512, JSON_THROW_ON_ERROR );
+		$this->assertNotEmpty( $baseline['files'] );
+		$messages = array_values( $baseline['files'] )[0]['messages'];
+		$this->assertSame(
+			1,
+			count(
+				array_filter(
+					$messages,
+					static function ( array $message ): bool {
+						return 'WordPress.Security.EscapeOutput.OutputNotEscaped' === $message['source'];
+					}
+				)
+			),
+			'The precise fixture allowance must leave the next output checked.'
+		);
+		foreach ( array( 'WordPress.Security.NonceVerification.Recommended', 'WordPress.Security.EscapeOutput.OutputNotEscaped' ) as $code ) {
+			$this->assertStringContainsString( $code, $output );
+		}
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Reproduce loss of inherited security rules while preserving a valid active checker.
+		file_put_contents( $this->root . '/phpcs.xml.dist', str_replace( '<rule ref="RANWordPressLibrary"/>', '<rule ref="Generic.PHP.Syntax"/>', $original ) );
+		list( $status, $output ) = $this->check_coverage( true );
+		$this->assertSame( 0, $status, $output );
+		$report = json_decode( $output, true, 512, JSON_THROW_ON_ERROR );
+		$this->assertNotEmpty( $report['files'] );
+		$this->assertSame( 0, $report['totals']['errors'] );
+		$this->assertSame( 0, $report['totals']['warnings'] );
+		list( $status, $output ) = $this->check_coverage();
+		$this->assertNotSame( 0, $status, $output );
+		$this->assertStringContainsString( 'PHPCS mandatory rule missing: phpcs.xml.dist RANWordPressLibrary', $output );
+	}
+
+	public function test_future_root_exclusions_require_review_before_a_file_exists(): void {
+		foreach ( array( 'phpcs.xml.dist', 'phpcs-tooling.xml.dist' ) as $profile ) {
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Preserve the actual isolated dependency exclusion before scope mutations.
+			$original = file_get_contents( $this->root . '/' . $profile );
+			foreach ( array(
+				str_replace( '</ruleset>', '<exclude-pattern>*/not-yet-created/*</exclude-pattern></ruleset>', $original ),
+				str_replace( 'vendor/*', '*/vendor/*', $original ),
+				str_replace( '<exclude-pattern>', '<exclude-pattern type="relative">', $original ),
+			) as $mutation ) {
+				// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Prove preventive rejection without creating a matching maintained file.
+				file_put_contents( $this->root . '/' . $profile, $mutation );
+				list( $status, $output ) = $this->check_coverage();
+				$this->assertNotSame( 0, $status, $output );
+				$this->assertStringContainsString( 'PHPCS root exclusion needs review: ' . $profile, $output );
+			}
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Restore the unchanged fixture profile after its mutations.
+			file_put_contents( $this->root . '/' . $profile, $original );
+		}
+	}
+
 	public function test_conditional_xml_elements_cannot_disable_checker_rules(): void {
 		$code  = 'WordPress.WP.AlternativeFunctions.json_encode_json_encode';
-		$rules = '<ruleset><file>resources</file><rule ref="RANWordPressLibrary"/><rule ref="RANOwnedMethods"/></ruleset>';
+		$rules = '<ruleset><file>resources</file><rule ref="RANWordPressLibrary"/><rule ref="RANOwnedMethods"/><exclude-pattern>vendor/*</exclude-pattern></ruleset>';
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Inspect inert native JSON input with the real locked checker.
 		file_put_contents( $this->root . '/resources/probe.php', '<?php json_encode( array() );' );
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Establish the shared-profile diagnostic before mutating its conditional attributes.
@@ -340,7 +420,7 @@ file_get_contents( 'fixture' );
 		file_put_contents( $this->root . '/resources/probe.php', "<?php\nfile_get_contents( 'fixture' );\n" );
 		foreach ( array( '<arg name="exclude" value="WordPress.WP.AlternativeFunctions"/>', '<arg name="sniffs" value="Generic.PHP.LowerCaseConstant"/>', '<arg name="ignore" value="*/probe.php"/>' ) as $argument ) {
 			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Demonstrate argument-level checker suppression in the isolated resource ruleset.
-			file_put_contents( $this->root . '/phpcs.xml.dist', '<ruleset><file>resources</file><rule ref="WordPress.WP.AlternativeFunctions"/><rule ref="Generic.PHP.LowerCaseConstant"/>' . $argument . '</ruleset>' );
+			file_put_contents( $this->root . '/phpcs.xml.dist', '<ruleset><file>resources</file><rule ref="RANWordPressLibrary"/><rule ref="RANOwnedMethods"/><exclude-pattern>vendor/*</exclude-pattern><rule ref="WordPress.WP.AlternativeFunctions"/><rule ref="Generic.PHP.LowerCaseConstant"/>' . $argument . '</ruleset>' );
 			list( $status, $output ) = $this->check_coverage( true );
 			$this->assertSame( 0, $status, $output );
 			list( $status, $output ) = $this->check_coverage();

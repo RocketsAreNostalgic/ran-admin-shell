@@ -67,6 +67,27 @@ try {
 				throw new RuntimeException( 'PHPCS local rule override needs review: ' . $ruleset . ' ' . $rule->getAttribute( 'ref' ) );
 			}
 		}
+		$xpath          = new DOMXPath( $document );
+		$required_rules = 'phpcs.xml.dist' === $ruleset
+			? array( 'RANWordPressLibrary', 'RANOwnedMethods' )
+			: array( 'RAN', 'WordPress-Extra', 'RANOwnedMethods', 'PHPCompatibility' );
+		$active_rules   = array();
+		foreach ( $xpath->query( '/ruleset/rule[@ref]' ) as $rule ) {
+			if ( ! $rule instanceof DOMElement ) {
+				throw new RuntimeException( 'PHPCS rule element cannot be read: ' . $ruleset );
+			}
+			$active_rules[] = $rule->getAttribute( 'ref' );
+		}
+		foreach ( $required_rules as $required_rule ) {
+			if ( ! in_array( $required_rule, $active_rules, true ) ) {
+				throw new RuntimeException( 'PHPCS mandatory rule missing: ' . $ruleset . ' ' . $required_rule );
+			}
+		}
+		$root_exclusions = $xpath->query( '/ruleset/exclude-pattern' );
+		if ( 1 !== count( $root_exclusions ) || 'vendor/*' !== (string) $root_exclusions->item( 0 )->nodeValue
+			|| 0 !== $root_exclusions->item( 0 )->attributes->length ) {
+			throw new RuntimeException( 'PHPCS root exclusion needs review: ' . $ruleset );
+		}
 		// phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase -- Preserve the native DOM/ZipArchive property contract; this is not an owned property.
 		if ( null === $document->documentElement ) {
 			throw new RuntimeException( 'PHPCS ruleset has no root: ' . $ruleset );
