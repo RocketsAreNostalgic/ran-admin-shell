@@ -441,6 +441,50 @@ file_get_contents( 'fixture' );
 		}
 	}
 
+	public function test_executable_bootstrap_cannot_exit_before_analysis(): void {
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Preserve the isolated analyzer configuration while reproducing executable bootstrap termination.
+		$configuration = file_get_contents( $this->root . '/phpstan.neon.dist' );
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Write inert invalid source for actual analyzer diagnostic evidence.
+		file_put_contents( $this->root . '/resources/probe.php', "<?php\nfunction ran_admin_bootstrap_probe(): int { return 'invalid'; }\n" );
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- The isolated bootstrap exits only its dedicated analyzer subprocess and never the test runner.
+		file_put_contents( $this->root . '/tools/bootstrap.php', '<?php exit( 0 );' );
+		foreach ( array( false, true ) as $with_bootstrap ) {
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Change only the effective bootstrap setting in the isolated analyzer configuration.
+			file_put_contents( $this->root . '/phpstan.neon.dist', $configuration . ( $with_bootstrap ? "    bootstrapFiles:\n        - tools/bootstrap.php\n" : '' ) );
+			$lines = array();
+			// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.system_calls_exec -- Execute the locked analyzer in process so the bootstrap's successful early termination is directly observable.
+			exec( escapeshellarg( PHP_BINARY ) . ' ' . escapeshellarg( dirname( __DIR__ ) . '/vendor/bin/phpstan' ) . ' analyse --debug --no-progress --error-format=json --configuration=' . escapeshellarg( $this->root . '/phpstan.neon.dist' ) . ' ' . escapeshellarg( $this->root . '/resources/probe.php' ), $lines, $status );
+			$this->assertSame( $with_bootstrap ? 0 : 1, $status );
+			if ( $with_bootstrap ) {
+				$this->assertSame( array(), $lines );
+			} else {
+				$this->assertStringContainsString( 'return.type', implode( "\n", $lines ) );
+			}
+			list( $status, $output ) = $this->check_coverage();
+			$this->assertSame( $with_bootstrap ? 1 : 0, $status, $output );
+			if ( $with_bootstrap ) {
+				$this->assertStringContainsString( 'PHPStan executable bootstrap files need explicit review.', $output );
+			}
+		}
+	}
+
+	public function test_bundled_bootstrap_identities_and_multiplicity_are_fixed(): void {
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Preserve the isolated configuration while checking the exact locked runtime bootstrap inventory.
+		$configuration = file_get_contents( $this->root . '/phpstan.neon.dist' );
+		$runtime       = 'phar://' . realpath( dirname( __DIR__ ) . '/vendor/phpstan/phpstan/phpstan.phar' ) . '/stubs/runtime/';
+		foreach ( array(
+			"    bootstrapFiles:\n        - '" . $runtime . "ReflectionUnionType.php'\n",
+			"    bootstrapFiles:\n        - '" . $runtime . "Unreviewed.php'\n",
+			"    bootstrapFiles!: []\n",
+		) as $override ) {
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Duplicate, add or remove only isolated bootstrap entries; none are executed by coverage.
+			file_put_contents( $this->root . '/phpstan.neon.dist', $configuration . $override );
+			list( $status, $output ) = $this->check_coverage();
+			$this->assertSame( 1, $status );
+			$this->assertStringContainsString( 'PHPStan executable bootstrap files need explicit review.', $output );
+		}
+	}
+
 	public function test_xml_arguments_cannot_disable_actual_diagnostics(): void {
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Supply inert native-operation input to the actual locked checker.
 		file_put_contents( $this->root . '/resources/probe.php', "<?php\nfile_get_contents( 'fixture' );\n" );

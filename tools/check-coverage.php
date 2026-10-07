@@ -22,6 +22,19 @@ try {
 	if ( array() !== $container->getParameter( 'ignoreErrors' ) ) {
 		throw new RuntimeException( 'PHPStan ignored errors need explicit review.' );
 	}
+	$bundled_runtime     = 'phar://' . realpath( $root . '/vendor/phpstan/phpstan/phpstan.phar' ) . '/stubs/runtime/';
+	$expected_bootstraps = array(
+		$bundled_runtime . 'ReflectionUnionType.php',
+		$bundled_runtime . 'ReflectionAttribute.php',
+		$bundled_runtime . 'Attribute85.php',
+		$bundled_runtime . 'ReflectionIntersectionType.php',
+	);
+	$actual_bootstraps   = $container->getParameter( 'bootstrapFiles' );
+	sort( $expected_bootstraps );
+	sort( $actual_bootstraps );
+	if ( $expected_bootstraps !== $actual_bootstraps ) {
+		throw new RuntimeException( 'PHPStan executable bootstrap files need explicit review.' );
+	}
 	if ( 80000 !== $container->getParameter( 'phpVersion' ) ) {
 		throw new RuntimeException( 'PHPStan compatibility target must remain PHP 8.0.' );
 	}
