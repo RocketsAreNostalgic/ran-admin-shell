@@ -26,13 +26,34 @@ final class RenderContractTest extends TestCase {
 				'name'       => '<Example>',
 				'strapline'  => 'A shared vocabulary',
 				'version'    => '1.2.3',
-				'logo'       => array( 'url' => 'https://example.com/logo.png', 'width' => 128, 'height' => 128 ),
-				'background' => array( 'url' => 'https://example.com/art.png', 'width' => 1600, 'height' => 400 ),
-				'navigation' => array(
-					array( 'label' => 'Current', 'url' => '/current', 'current' => true ),
-					array( 'label' => 'Also current', 'url' => '/other', 'current' => true ),
+				'logo'       => array(
+					'url'    => 'https://example.com/logo.png',
+					'width'  => 128,
+					'height' => 128,
 				),
-				'actions'    => array( array( 'label' => 'Support', 'url' => '/support' ) ),
+				'background' => array(
+					'url'    => 'https://example.com/art.png',
+					'width'  => 1600,
+					'height' => 400,
+				),
+				'navigation' => array(
+					array(
+						'label'   => 'Current',
+						'url'     => '/current',
+						'current' => true,
+					),
+					array(
+						'label'   => 'Also current',
+						'url'     => '/other',
+						'current' => true,
+					),
+				),
+				'actions'    => array(
+					array(
+						'label' => 'Support',
+						'url'   => '/support',
+					),
+				),
 			)
 		);
 
@@ -51,8 +72,16 @@ final class RenderContractTest extends TestCase {
 			array(
 				'name'       => 'RAN Example',
 				'strapline'  => ' ',
-				'logo'       => array( 'url' => '/logo.png', 'width' => 0, 'height' => 10 ),
-				'background' => array( 'url' => '', 'width' => 10, 'height' => 10 ),
+				'logo'       => array(
+					'url'    => '/logo.png',
+					'width'  => 0,
+					'height' => 10,
+				),
+				'background' => array(
+					'url'    => '',
+					'width'  => 10,
+					'height' => 10,
+				),
 				'navigation' => array(),
 				'actions'    => array(),
 			)
@@ -68,6 +97,23 @@ final class RenderContractTest extends TestCase {
 	/** A missing required name renders nothing. */
 	public function test_missing_name_renders_nothing() {
 		$this->assertSame( '', $this->render( array( 'strapline' => 'No product' ) ) );
+	}
+
+	public function test_preview_keeps_quality_annotations_out_of_html(): void {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Save controlled request state for restoration; this preview test performs no protected mutation.
+		$previous_query = $_GET;
+		$_GET           = array( 'case' => 'name-only' );
+		ob_start();
+		try {
+			require dirname( __DIR__ ) . '/fixtures/index.php';
+			$html = (string) ob_get_contents();
+		} finally {
+			ob_end_clean();
+			$_GET = $previous_query;
+		}
+		$this->assertStringContainsString( '<title>RAN Admin Shell — name-only</title>', $html );
+		$this->assertStringContainsString( 'ran-admin-shell--name-only', $html );
+		$this->assertStringNotContainsString( 'phpcs:', $html );
 	}
 
 	/** Render the symbol-free resource in a local scope. */

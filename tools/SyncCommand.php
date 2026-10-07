@@ -28,18 +28,22 @@ final class SyncCommand {
 
 			if ( 'sync' === $command ) {
 				self::sync( $config );
+				// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fwrite -- Write standalone command diagnostics to the existing STDOUT/STDERR stream.
 				fwrite( STDOUT, "RAN Admin Shell resources synchronized.\n" );
 				return 0;
 			}
 
 			if ( self::check( $config, $options['immutable'] ) ) {
+				// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fwrite -- Write standalone command diagnostics to the existing STDOUT/STDERR stream.
 				fwrite( STDOUT, "RAN Admin Shell resources are current.\n" );
 				return 0;
 			}
 
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fwrite -- Write standalone command diagnostics to the existing STDOUT/STDERR stream.
 			fwrite( STDERR, "RAN Admin Shell resource drift detected.\n" );
 			return 1;
 		} catch ( \Throwable $error ) {
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fwrite -- Write standalone command diagnostics to the existing STDOUT/STDERR stream.
 			fwrite( STDERR, 'RAN Admin Shell: ' . $error->getMessage() . "\n" );
 			return 2;
 		}
@@ -61,6 +65,7 @@ final class SyncCommand {
 		$provenance = self::provenance( $config, $resources );
 		self::atomic_write(
 			$config['provenance'],
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.json_encode_json_encode -- Native JSON preserves the standalone serialization flags and bytes without loading WordPress.
 			(string) json_encode( $provenance, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES ) . "\n",
 			$config['root']
 		);
@@ -87,6 +92,7 @@ final class SyncCommand {
 			self::assert_installed_metadata( $locked );
 		}
 
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.json_encode_json_encode -- Native JSON preserves the standalone serialization flags and bytes without loading WordPress.
 		$expected = (string) json_encode( self::provenance( $config, $resources ), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES ) . "\n";
 
 		return is_file( $config['provenance'] )
@@ -110,6 +116,7 @@ final class SyncCommand {
 			} elseif ( '--immutable' === $argument && 'check' === $command ) {
 				$immutable = true;
 			} else {
+				// phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Internal standalone CLI exception data; the CLI reports it to STDERR, not HTML.
 				throw new \RuntimeException( 'Unknown command option: ' . $argument );
 			}
 		}
@@ -133,6 +140,7 @@ final class SyncCommand {
 			throw new \RuntimeException( 'Unable to resolve the consumer root.' );
 		}
 
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Read exact native file bytes for standalone configuration, immutable resource verification or isolated fixture evidence.
 		$data = json_decode( (string) file_get_contents( $config_path ), true );
 		if ( ! is_array( $data ) || 1 !== ( $data['schema'] ?? null ) ) {
 			throw new \RuntimeException( 'Configuration schema must be 1.' );
@@ -141,6 +149,7 @@ final class SyncCommand {
 		$paths = array();
 		foreach ( array( 'php', 'css', 'provenance' ) as $key ) {
 			if ( ! isset( $data[ $key ] ) || ! is_string( $data[ $key ] ) ) {
+				// phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Internal standalone CLI exception data; the CLI reports it to STDERR, not HTML.
 				throw new \RuntimeException( 'Configuration is missing ' . $key . '.' );
 			}
 			$paths[ $key ] = self::safe_destination( $root, $data[ $key ] );
@@ -163,6 +172,7 @@ final class SyncCommand {
 		$destination = $root . DIRECTORY_SEPARATOR . str_replace( '/', DIRECTORY_SEPARATOR, $relative );
 		$current     = dirname( $destination );
 		$root_length = strlen( $root );
+		// phpcs:ignore Squiz.PHP.DisallowSizeFunctionsInLoops.Found -- Recheck the changing parent path length each iteration to preserve the traversal fence.
 		while ( $current !== $root && strlen( $current ) >= $root_length ) {
 			if ( is_link( $current ) ) {
 				throw new \RuntimeException( 'Resource destination traverses a symbolic link.' );
@@ -212,9 +222,13 @@ final class SyncCommand {
 			if ( $immutable ) {
 				throw new \RuntimeException( 'Immutable verification requires composer.lock.' );
 			}
-			return array( 'version' => 'unlocked', 'reference' => 'unlocked' );
+			return array(
+				'version'   => 'unlocked',
+				'reference' => 'unlocked',
+			);
 		}
 
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Read exact native file bytes for standalone configuration, immutable resource verification or isolated fixture evidence.
 		$lock = json_decode( (string) file_get_contents( $lock_path ), true );
 		foreach ( array_merge( $lock['packages'] ?? array(), $lock['packages-dev'] ?? array() ) as $package ) {
 			if ( self::PACKAGE_NAME !== ( $package['name'] ?? '' ) ) {
@@ -225,9 +239,13 @@ final class SyncCommand {
 			if ( $immutable && ( 'git' !== ( $package['source']['type'] ?? '' ) || 1 !== preg_match( '/^[a-f0-9]{40}$/i', $reference ) ) ) {
 				throw new \RuntimeException( 'Immutable verification requires a full Git source reference.' );
 			}
-			return array( 'version' => $version, 'reference' => $reference );
+			return array(
+				'version'   => $version,
+				'reference' => $reference,
+			);
 		}
 
+		// phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Internal standalone CLI exception data; the CLI reports it to STDERR, not HTML.
 		throw new \RuntimeException( 'composer.lock does not contain ' . self::PACKAGE_NAME . '.' );
 	}
 
@@ -252,12 +270,14 @@ final class SyncCommand {
 		if ( ! is_file( $source ) ) {
 			throw new \RuntimeException( 'Canonical package resource is missing.' );
 		}
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Read exact native file bytes for standalone configuration, immutable resource verification or isolated fixture evidence.
 		self::atomic_write( $destination, (string) file_get_contents( $source ), $root );
 	}
 
 	/** Atomically write bytes to a safe destination. */
 	private static function atomic_write( $destination, $contents, $root ) {
 		$directory = dirname( $destination );
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_mkdir -- Create native directories for standalone synchronization or the isolated fixture; retain mode and existence checks.
 		if ( ! is_dir( $directory ) && ! mkdir( $directory, 0777, true ) && ! is_dir( $directory ) ) {
 			throw new \RuntimeException( 'Unable to create resource destination directory.' );
 		}
@@ -266,7 +286,9 @@ final class SyncCommand {
 		if ( false === $temporary ) {
 			throw new \RuntimeException( 'Unable to create a temporary resource file.' );
 		}
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents, WordPress.WP.AlternativeFunctions.rename_rename -- Write exact bytes to the owned native temporary/fixture path; preserve filesystem and distribution observations. Native same-directory rename is the atomic resource replacement boundary.
 		if ( false === file_put_contents( $temporary, $contents ) || ! rename( $temporary, $destination ) ) {
+			// phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged, WordPress.WP.AlternativeFunctions.unlink_unlink -- Best-effort removal of the owned temporary file preserves the original replacement failure. Remove owned native fixture/temporary entries with the existing link and cleanup boundaries.
 			@unlink( $temporary );
 			throw new \RuntimeException( 'Unable to replace a synchronized resource.' );
 		}

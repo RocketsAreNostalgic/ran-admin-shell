@@ -69,11 +69,12 @@ independent syntax sweep, standards check, static analysis and existing
 render/synchronization tests, in that order.
 
 - `composer check:coverage` compares actual maintained PHP and Composer CLI
-  entries with the direct PHPStan and PHPCS source scopes. A newly added source
-  path outside either gate, or an exclusion of maintained source, fails the
-  check. New extensionless Composer commands or imported PHPStan configurations
-  require a reviewed guard update. Test/preview fixtures and installed
-  dependencies keep their separate established checks.
+  entries with the direct PHPStan and PHPCS source scopes. A newly added maintained PHP
+  path outside either gate, or a standards exclusion of maintained
+  PHP, fails the check. Blanket, persistent (`phpcs:disable`) and legacy suppression comments also fail.
+  New extensionless Composer commands or imported PHPStan configurations require
+  a reviewed guard update. Tests and previews require the same direct level-5 analysis as production
+  and tooling. Installed dependencies remain excluded.
 - `composer lint:syntax` parses PHP in `resources/`, `tools/`, `tests/` and
   `fixtures/`, plus the extensionless `bin/ran-admin-shell` entrypoint. Missing
   required roots or entrypoint and parser failures fail the command. It does
@@ -84,20 +85,17 @@ render/synchronization tests, in that order.
   and syntax-sweep failure contracts.
 
 Standards consume published `ran/coding-standards` v1 through
-`RANWordPressLibrary` for shipped resources and `RAN` for standalone tooling.
-The existing distinction remains: WordPress rules apply to resources, while
-PHPCompatibilityWP applies to resources and full PHPCompatibility applies to
-standalone tools, tests and the CLI. Separate rulesets prevent WordPress
+`RANWordPressLibrary` for shipped resources and `RAN` plus WordPress-Extra conventions for standalone tooling, tests and previews.
+PHPCompatibilityWP applies to resources; full PHPCompatibility applies to standalone tools, tests, previews and the CLI. Common formatting, owned naming and Yoda conditions apply to both scopes. Separate rulesets prevent WordPress
 polyfill exclusions from leaking into standalone checks. Both `standards` and
 `standards:fix` run the resource and tooling rulesets in the same order. PHP support and the
 WordPress floor remain local settings.
-The preview fixtures receive syntax coverage without new style enforcement.
+The preview fixtures receive the same common conventions and full native PHP compatibility as tooling/tests.
 PHP 8.0 remains the supported floor; CI also runs the aggregate on PHP 8.5.
 The compatibility packages are explicitly root-pinned to the shared profile's
 reviewed alpha generation (PHPCompatibility 10 / WP 3 / Paragonie 2); Composer
 stability remains unchanged for other dependencies. Upgrades require a reviewed
-lock update and PHP-floor/current CI. No owned-method naming enforcement is
-implicitly enabled by this adoption. Static analysis remains tracked in #13.
+lock update and PHP-floor/current CI. RANOwnedMethods explicitly checks owned methods in both scopes, including inherited classes. Required PHPUnit/PHPCS signatures and native properties have exact local exceptions. The completed initial analysis adoption remains recorded in #13.
 
 `standards:fix` preserves PHPCBF exit semantics (0 unchanged, 1 successfully
 fixed, greater than 1 failure) while continuing to the second scope after
@@ -105,8 +103,7 @@ successful fixes in the first.
 
 `composer test` also runs the real PHPCS/PHPCBF binaries in a temporary fixture
 layout: incompatible CLI code must fail, an unrelated extensionless file stays
-excluded, and a fixture-only fixable rule proves the same CLI is fixed once and
-then remains byte-stable. The fixture rule does not alter production policy.
+excluded, and the adopted spacing rule proves the same CLI is fixed once and then remains byte-stable. Additional controls enforce naming/conditions at current and future tooling, test, preview and resource paths.
 
 ### Static analysis
 
@@ -116,20 +113,24 @@ The CLI requires registered command-line arguments and exits with a clear
 diagnostic if `$argv` is unavailable (for example, when `register_argc_argv`
 is disabled), rather than passing an undefined variable into the sync command.
 Direct analysis covers the extensionless CLI and all PHP under `resources/`
-and `tools/`, including future resource files. WordPress 6.5-generation stubs
+and `tools/`, `tests/` and `fixtures/`, including future files in each role.
+An independently discovered maintained file outside these roots fails coverage
+until its whole role is included or a concrete exemption is reviewed.
+WordPress 6.5-generation stubs
 and PHPCS source provide
 symbol discovery only; dependency bodies are not first-party analysis roots.
 The stubs describe APIs, not proof of an installed WordPress runtime.
 
-Tests remain under syntax, compatibility and PHPUnit gates; preview fixtures
-remain under syntax checks. Neither is counted as maintained production
-analysis coverage. Consumer-owned synchronized copies are verified through
+Tests and preview fixtures are now included in direct analysis: all 16 maintained
+PHP entrypoints pass level 5, with no file exemptions or ignored diagnostics.
+The coverage gate rejects a level below 5 and development-role omissions.
+Their existing syntax, common standards, compatibility and PHPUnit checks remain.
+Consumer-owned synchronized copies are verified through
 existing render/sync/provenance tests rather than scanned in sibling checkouts.
 No baseline or ignored PHPStan errors are introduced.
 
 The initial level-6 probe reported 28 missing parameter/return/iterable-value
-type declarations in `tools/SyncCommand.php`. Accurate contract typing and any
-subsequent level increase remain a separately reviewed follow-up under #13;
+type declarations in `tools/SyncCommand.php`. That is historical optional analysis sizing, not an active task in closed #13. Accurate contract typing and any subsequent level increase require separately scoped work under the existing quality programme;
 the renderer and synchronization implementation remain unchanged.
 
 ### Package distribution acceptance
@@ -151,3 +152,11 @@ dependencies, test/configuration trees and workflows are not installed with the
 export. Each actual plugin still owns its archive allowlist and must exclude
 `vendor/` and this build-time package from its release ZIP. This isolated fixture
 does not claim installed WordPress or interactive UI acceptance.
+
+
+### Next-beta standards acceptance
+
+[docs/quality-acceptance.md](docs/quality-acceptance.md) records the standalone/preview
+profile, exact retained exception groups, existing safety evidence and remaining
+qualification boundaries under organisation #65/#128. This does not update any
+consumer pin, publish the package or claim installed UI acceptance.

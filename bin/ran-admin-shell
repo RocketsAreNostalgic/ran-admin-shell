@@ -13,8 +13,10 @@ if ( isset( $_composer_autoload_path ) && is_string( $_composer_autoload_path ) 
 require_once dirname( __DIR__ ) . '/tools/SyncCommand.php';
 
 if ( ! isset( $argv ) ) {
+	// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fwrite -- Write standalone command diagnostics to the existing STDOUT/STDERR stream.
 	fwrite( STDERR, "RAN Admin Shell requires registered CLI arguments (register_argc_argv).\n" );
 	exit( 2 );
 }
 
+// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- The expression returns an integer process exit status, not rendered HTML.
 exit( \RAN\AdminShell\Tool\SyncCommand::main( $argv ) );
