@@ -22,6 +22,9 @@ try {
 	if ( array() !== $container->getParameter( 'ignoreErrors' ) ) {
 		throw new RuntimeException( 'PHPStan ignored errors need explicit review.' );
 	}
+	if ( 80000 !== $container->getParameter( 'phpVersion' ) ) {
+		throw new RuntimeException( 'PHPStan compatibility target must remain PHP 8.0.' );
+	}
 	$analysis_files = $container->getService( 'fileFinderAnalyse' )->findFiles( $container->getParameter( 'paths' ) )->getFiles();
 	$bundled_stubs  = 'phar://' . realpath( $root . '/vendor/phpstan/phpstan/phpstan.phar' ) . '/stubs/';
 	foreach ( $container->getParameter( 'stubFiles' ) as $stub ) {
@@ -86,6 +89,11 @@ try {
 				throw new RuntimeException( 'PHPCS mandatory rule missing: ' . $ruleset . ' ' . $required_rule );
 			}
 		}
+		$compatibility = $xpath->query( '//config[@name="testVersion"]' );
+		if ( 1 !== count( $compatibility ) || ! $compatibility->item( 0 ) instanceof DOMElement || '8.0-' !== $compatibility->item( 0 )->getAttribute( 'value' )
+			|| 2 !== $compatibility->item( 0 )->attributes->length ) {
+			throw new RuntimeException( 'PHPCS compatibility target must remain 8.0-: ' . $ruleset );
+		}
 		$root_exclusions = $xpath->query( '/ruleset/exclude-pattern' );
 		if ( 1 !== count( $root_exclusions ) || 'vendor/*' !== (string) $root_exclusions->item( 0 )->nodeValue
 			|| 0 !== $root_exclusions->item( 0 )->attributes->length ) {
@@ -133,10 +141,18 @@ try {
 		if ( ! $file->isFile() ) {
 			continue;
 		}
-		$relative = str_replace( '\\', '/', substr( $file->getPathname(), strlen( $root ) + 1 ) );
-		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Inspect only a bounded header to discover inert PHP entrypoints with nonstandard filenames.
-		$header = file_get_contents( $file->getPathname(), false, null, 0, 512 );
-		if ( 'php' === strtolower( $file->getExtension() ) || ( is_string( $header ) && preg_match( '/\A(?:#![^\r\n]*\R)?\s*<\?(?:php(?:\s|$)|=)/i', $header ) ) ) {
+		$relative  = str_replace( '\\', '/', substr( $file->getPathname(), strlen( $root ) + 1 ) );
+		$extension = strtolower( $file->getExtension() );
+		// Templates and extensionless commands can contain PHP after arbitrarily long HTML.
+		// Document/data extensions retain header-only detection so quoted PHP examples stay inert.
+		$template = in_array( $extension, array( '', 'phtml', 'inc', 'html', 'htm' ), true );
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Inspect inert candidate bytes without executing templates; templates require complete preamble discovery.
+		$contents = $template ? file_get_contents( $file->getPathname() ) : file_get_contents( $file->getPathname(), false, null, 0, 512 );
+		if ( false === $contents ) {
+			throw new RuntimeException( 'Cannot inspect maintained candidate: ' . $relative );
+		}
+		$opening = $template ? '/<\?(?:php(?:\s|$)|=)/i' : '/\A(?:#![^\r\n]*\R)?\s*<\?(?:php(?:\s|$)|=)/i';
+		if ( in_array( $extension, array( 'php', 'phtml' ), true ) || preg_match( $opening, $contents ) ) {
 			if ( 'php' !== $file->getExtension() && 'bin/ran-admin-shell' !== $relative ) {
 				throw new RuntimeException( 'PHP entrypoint requires explicit checker support: ' . $relative );
 			}
