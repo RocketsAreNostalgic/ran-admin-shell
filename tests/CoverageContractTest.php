@@ -415,6 +415,32 @@ file_get_contents( 'fixture' );
 		}
 	}
 
+	public function test_effective_ignored_errors_cannot_hide_actual_diagnostics(): void {
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Preserve the isolated native analyzer configuration for the suppression controls.
+		$configuration = file_get_contents( $this->root . '/phpstan.neon.dist' );
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Create inert source whose invalid return is analyzed, never executed.
+		file_put_contents( $this->root . '/resources/probe.php', "<?php\nfunction ran_admin_shell_ignored_error_probe(): int { return 'invalid'; }\n" );
+		foreach ( array( '', "    ignoreErrors:\n        - '#.*#'\n", "    ignoreErrors:\n        - identifier: return.type\n" ) as $override ) {
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Write only the isolated effective configuration used to demonstrate analyzer suppression.
+			file_put_contents( $this->root . '/phpstan.neon.dist', $configuration . $override );
+			$lines = array();
+			// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.system_calls_exec -- Run the locked analyzer against the inert probe and retain its exit status and JSON evidence.
+			exec( escapeshellarg( PHP_BINARY ) . ' ' . escapeshellarg( dirname( __DIR__ ) . '/vendor/bin/phpstan' ) . ' analyse --no-progress --error-format=json --configuration=' . escapeshellarg( $this->root . '/phpstan.neon.dist' ) . ' ' . escapeshellarg( $this->root . '/resources/probe.php' ), $lines, $status );
+			$report = json_decode( implode( "\n", $lines ), true, 512, JSON_THROW_ON_ERROR );
+			if ( '' === $override ) {
+				$this->assertSame( 1, $status );
+				$this->assertSame( 'return.type', $report['files'][ $this->root . '/resources/probe.php' ]['messages'][0]['identifier'] );
+				continue;
+			}
+			$this->assertSame( 0, $status );
+			$this->assertSame( 0, $report['totals']['file_errors'] );
+			$this->assertSame( array(), $report['errors'] );
+			list( $status, $output ) = $this->check_coverage();
+			$this->assertNotSame( 0, $status );
+			$this->assertStringContainsString( 'PHPStan ignored errors need explicit review.', $output );
+		}
+	}
+
 	public function test_xml_arguments_cannot_disable_actual_diagnostics(): void {
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Supply inert native-operation input to the actual locked checker.
 		file_put_contents( $this->root . '/resources/probe.php', "<?php\nfile_get_contents( 'fixture' );\n" );

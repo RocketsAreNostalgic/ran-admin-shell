@@ -19,6 +19,9 @@ try {
 	if ( 'max' !== $level && (int) $level < 5 ) {
 		throw new RuntimeException( 'Maintained PHP requires PHPStan level 5 or higher.' );
 	}
+	if ( array() !== $container->getParameter( 'ignoreErrors' ) ) {
+		throw new RuntimeException( 'PHPStan ignored errors need explicit review.' );
+	}
 	$analysis_files = $container->getService( 'fileFinderAnalyse' )->findFiles( $container->getParameter( 'paths' ) )->getFiles();
 	$bundled_stubs  = 'phar://' . realpath( $root . '/vendor/phpstan/phpstan/phpstan.phar' ) . '/stubs/';
 	foreach ( $container->getParameter( 'stubFiles' ) as $stub ) {
