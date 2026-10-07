@@ -589,6 +589,56 @@ file_get_contents( 'fixture' );
 		}
 	}
 
+	public function test_large_files_and_link_targets_use_bounded_complete_discovery(): void {
+		foreach ( array( false, true ) as $linked ) {
+			$path = $linked ? $this->root . '-external.custom' : $this->root . '/large.custom';
+			$link = $this->root . '/linked.custom';
+			try {
+				$file = new \SplFileObject( $path, 'w+b' );
+				self::assertTrue( $file->ftruncate( 160 * 1024 * 1024 ) );
+				if ( $linked ) {
+					// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.system_calls_symlink -- Point only the isolated discovery fixture at its owned external sparse data file.
+					self::assertTrue( symlink( $path, $link ) );
+				}
+				list( $status, $output ) = $this->check_coverage();
+				self::assertSame( 0, $status, $output );
+				foreach ( array( 8191, 160 * 1024 * 1024 - 1 ) as $offset ) {
+					self::assertSame( 0, $file->fseek( $offset ) );
+					self::assertSame( 2, $file->fwrite( '<?' ) );
+					list( $status, $output ) = $this->check_coverage();
+					self::assertSame( 1, $status, $output );
+					self::assertStringContainsString( $linked ? 'Maintained PHP is a symbolic link: linked.custom' : 'PHP entrypoint requires explicit checker support: large.custom', $output );
+					self::assertSame( 0, $file->fseek( $offset ) );
+					self::assertSame( 2, $file->fwrite( "\0\0" ) );
+				}
+			} finally {
+				if ( is_link( $link ) ) {
+					// phpcs:ignore WordPress.WP.AlternativeFunctions.unlink_unlink -- Remove only this test's external-target link, including after an assertion fails.
+					unlink( $link );
+				}
+				// phpcs:ignore WordPress.WP.AlternativeFunctions.unlink_unlink -- Remove only the uniquely owned sparse fixture, never the original repository or dependency tree.
+				unlink( $path );
+			}
+		}
+	}
+
+	public function test_oversized_inert_candidates_require_explicit_review(): void {
+		foreach ( array(
+			'large.json'      => '"' . str_repeat( ' ', 1048576 ) . '<?"',
+			'spaced.md'       => str_repeat( ' ', 8191 ) . '<?',
+			'long-shebang.md' => '#!' . str_repeat( 'x', 8192 ) . "\n<?",
+			'long.xml'        => '<?xml' . str_repeat( ' ', 8192 ) . 'version="1.0"?><root/>',
+		) as $name => $source ) {
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Inputs beyond bounded JSON validation or XML-declaration parsing must fail closed for review, without becoming ignored files.
+			file_put_contents( $this->root . '/' . $name, $source );
+			list( $status, $output ) = $this->check_coverage();
+			self::assertSame( 1, $status, $output );
+			self::assertStringContainsString( 'PHP entrypoint requires explicit checker support: ' . $name, $output );
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.unlink_unlink -- Remove only the current bounded-parser fixture before the next control.
+			unlink( $this->root . '/' . $name );
+		}
+	}
+
 	public function test_required_wordpress_floor_and_cli_filter_cannot_disappear(): void {
 		foreach ( array(
 			'phpcs.xml.dist'         => array( '<config name="minimum_wp_version" value="6.5"/>', '<config name="minimum_wp_version" value="7.0"/>', 'PHPCS WordPress compatibility floor must remain 6.5.' ),
@@ -650,7 +700,7 @@ file_get_contents( 'fixture' );
 
 	private function check_coverage( bool $use_checker = false, int $short_open_tag = 0 ): array {
 		// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.system_calls_proc_open -- Run the existing isolated CLI/checker command with its argument vector and observed exit status.
-		$process = proc_open( $use_checker ? array( PHP_BINARY, dirname( __DIR__ ) . '/vendor/bin/phpcs', '--standard=' . $this->root . '/phpcs.xml.dist', '--report=json', '--no-colors', '-q', $this->root . '/resources/probe.php' ) : array( PHP_BINARY, '-d', 'short_open_tag=' . $short_open_tag, $this->root . '/tools/check-coverage.php' ), array( array( 'pipe', 'r' ), array( 'pipe', 'w' ), array( 'pipe', 'w' ) ), $pipes );
+		$process = proc_open( $use_checker ? array( PHP_BINARY, dirname( __DIR__ ) . '/vendor/bin/phpcs', '--standard=' . $this->root . '/phpcs.xml.dist', '--report=json', '--no-colors', '-q', $this->root . '/resources/probe.php' ) : array( PHP_BINARY, '-d', 'memory_limit=128M', '-d', 'short_open_tag=' . $short_open_tag, $this->root . '/tools/check-coverage.php' ), array( array( 'pipe', 'r' ), array( 'pipe', 'w' ), array( 'pipe', 'w' ) ), $pipes );
 		$this->assertIsResource( $process );
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose -- Close the owned subprocess pipe; WordPress filesystem wrappers do not own this stream.
 		fclose( $pipes[0] );
