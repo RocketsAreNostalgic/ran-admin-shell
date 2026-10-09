@@ -1,5 +1,5 @@
 parameters:
-    level: 5
+    level: 8
     phpVersion: 80000
     paths:
         - bin/ran-admin-shell

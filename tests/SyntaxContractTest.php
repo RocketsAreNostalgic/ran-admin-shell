@@ -4,6 +4,7 @@
 use PHPUnit\Framework\TestCase;
 
 final class SyntaxContractTest extends TestCase {
+	/** @var string */
 	private $root;
 
 	// phpcs:ignore RANOwnedMethods.NamingConventions.ValidMethodName.NotSnakeCase -- Required PHPUnit lifecycle override.
@@ -38,12 +39,13 @@ final class SyntaxContractTest extends TestCase {
 	}
 
 	/** @dataProvider invalid_paths */
-	public function test_invalid_maintained_sources_fail( $path ): void {
+	public function test_invalid_maintained_sources_fail( string $path ): void {
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Write exact bytes to the owned native temporary/fixture path; preserve filesystem and distribution observations.
 		file_put_contents( $this->root . '/' . $path, '<?php broken syntax' );
 		$this->assertNotSame( 0, $this->lint() );
 	}
 
+	/** @return list<array{string}> */
 	public function invalid_paths(): array {
 		return array_map(
 			static function ( $path ) {

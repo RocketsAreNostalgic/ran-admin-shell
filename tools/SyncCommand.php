@@ -17,7 +17,7 @@ final class SyncCommand {
 	/**
 	 * Run the command.
 	 *
-	 * @param array $argv CLI arguments.
+	 * @param array<int, string> $argv CLI arguments.
 	 * @return int
 	 */
 	public static function main( array $argv ) {
@@ -52,7 +52,7 @@ final class SyncCommand {
 	/**
 	 * Copy canonical resources and write provenance.
 	 *
-	 * @param array $config Validated configuration.
+	 * @param array{php:string,css:string,provenance:string,root:string} $config Validated configuration.
 	 * @return void
 	 */
 	public static function sync( array $config ) {
@@ -74,7 +74,7 @@ final class SyncCommand {
 	/**
 	 * Check canonical bytes and provenance without changing the consumer.
 	 *
-	 * @param array $config    Validated configuration.
+	 * @param array{php:string,css:string,provenance:string,root:string} $config Validated configuration.
 	 * @param bool  $immutable Require an immutable VCS lock reference.
 	 * @return bool
 	 */
@@ -82,7 +82,12 @@ final class SyncCommand {
 		$resources = self::resources( $config );
 
 		foreach ( $resources as $destination => $source ) {
-			if ( ! is_file( $destination ) || is_link( $destination ) || ! hash_equals( hash_file( 'sha256', $source ), hash_file( 'sha256', $destination ) ) ) {
+			if ( ! is_file( $destination ) || is_link( $destination ) ) {
+				return false;
+			}
+			$source_hash      = hash_file( 'sha256', $source );
+			$destination_hash = hash_file( 'sha256', $destination );
+			if ( false === $source_hash || false === $destination_hash || ! hash_equals( $source_hash, $destination_hash ) ) {
 				return false;
 			}
 		}
@@ -95,12 +100,19 @@ final class SyncCommand {
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.json_encode_json_encode -- Native JSON preserves the standalone serialization flags and bytes without loading WordPress.
 		$expected = (string) json_encode( self::provenance( $config, $resources ), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES ) . "\n";
 
-		return is_file( $config['provenance'] )
-			&& ! is_link( $config['provenance'] )
-			&& hash_equals( hash( 'sha256', $expected ), hash_file( 'sha256', $config['provenance'] ) );
+		if ( ! is_file( $config['provenance'] ) || is_link( $config['provenance'] ) ) {
+			return false;
+		}
+		$provenance_hash = hash_file( 'sha256', $config['provenance'] );
+		return false !== $provenance_hash && hash_equals( hash( 'sha256', $expected ), $provenance_hash );
 	}
 
-	/** Parse command-line options. */
+	/**
+	 * Parse command-line options.
+	 *
+	 * @param array<int, string> $argv CLI arguments.
+	 * @return array{command:string,config:string,immutable:bool}
+	 */
 	private static function parse_options( array $argv ) {
 		$command   = isset( $argv[1] ) ? (string) $argv[1] : '';
 		$config    = 'ran-admin-shell.json';
@@ -128,7 +140,12 @@ final class SyncCommand {
 		);
 	}
 
-	/** Load and validate a consumer configuration. */
+	/**
+	 * Load and validate a consumer configuration.
+	 *
+	 * @param mixed $config_path Configuration path, converted to a string.
+	 * @return array{php:string,css:string,provenance:string,root:string}
+	 */
 	public static function load_configuration( $config_path ) {
 		$config_path = (string) $config_path;
 		if ( '' === $config_path || ! is_file( $config_path ) || is_link( $config_path ) ) {
@@ -162,7 +179,13 @@ final class SyncCommand {
 		return array_merge( $paths, array( 'root' => $root ) );
 	}
 
-	/** Resolve a safe consumer-owned destination. */
+	/**
+	 * Resolve a safe consumer-owned destination.
+	 *
+	 * @param string $root Consumer root.
+	 * @param mixed $relative Relative destination, converted to a string.
+	 * @return string
+	 */
 	private static function safe_destination( $root, $relative ) {
 		$relative = str_replace( '\\', '/', trim( (string) $relative ) );
 		if ( '' === $relative || '/' === $relative[0] || preg_match( '/^[A-Za-z]:\//', $relative ) || in_array( '..', explode( '/', $relative ), true ) ) {
@@ -187,7 +210,12 @@ final class SyncCommand {
 		return $destination;
 	}
 
-	/** Return destination-to-source mapping. */
+	/**
+	 * Return destination-to-source mapping.
+	 *
+	 * @param array{php:string,css:string,provenance:string,root:string} $config Validated configuration.
+	 * @return array<string, string>
+	 */
 	private static function resources( array $config ) {
 		$package_root = dirname( __DIR__ );
 		return array(
@@ -196,7 +224,13 @@ final class SyncCommand {
 		);
 	}
 
-	/** Build deterministic provenance. */
+	/**
+	 * Build deterministic provenance.
+	 *
+	 * @param array{php:string,css:string,provenance:string,root:string} $config Validated configuration.
+	 * @param array<string, string> $resources Destination-to-source mapping.
+	 * @return array{schema:int,package:string,version:string,reference:string,files:array<string,string>}
+	 */
 	private static function provenance( array $config, array $resources ) {
 		$metadata = self::locked_metadata( $config['root'], false );
 		$files    = array();
@@ -215,7 +249,13 @@ final class SyncCommand {
 		);
 	}
 
-	/** Read package metadata from the consumer lock file. */
+	/**
+	 * Read package metadata from the consumer lock file.
+	 *
+	 * @param string $root Consumer root.
+	 * @param bool $immutable Require an immutable source reference.
+	 * @return array{version:string,reference:string}
+	 */
 	private static function locked_metadata( $root, $immutable ) {
 		$lock_path = $root . '/composer.lock';
 		if ( ! is_file( $lock_path ) || is_link( $lock_path ) ) {
@@ -249,7 +289,12 @@ final class SyncCommand {
 		throw new \RuntimeException( 'composer.lock does not contain ' . self::PACKAGE_NAME . '.' );
 	}
 
-	/** Require the installed package to match the immutable lock reference. */
+	/**
+	 * Require the installed package to match the immutable lock reference.
+	 *
+	 * @param array{version:string,reference:string} $locked Consumer lock metadata.
+	 * @return void
+	 */
 	private static function assert_installed_metadata( array $locked ) {
 		if ( ! class_exists( '\\Composer\\InstalledVersions' ) || ! \Composer\InstalledVersions::isInstalled( self::PACKAGE_NAME ) ) {
 			throw new \RuntimeException( 'Immutable verification requires Composer installed metadata.' );
@@ -265,7 +310,14 @@ final class SyncCommand {
 		}
 	}
 
-	/** Atomically copy one resource. */
+	/**
+	 * Atomically copy one resource.
+	 *
+	 * @param string $source Canonical resource.
+	 * @param string $destination Consumer destination.
+	 * @param string $root Consumer root.
+	 * @return void
+	 */
 	private static function atomic_copy( $source, $destination, $root ) {
 		if ( ! is_file( $source ) ) {
 			throw new \RuntimeException( 'Canonical package resource is missing.' );
@@ -274,7 +326,14 @@ final class SyncCommand {
 		self::atomic_write( $destination, (string) file_get_contents( $source ), $root );
 	}
 
-	/** Atomically write bytes to a safe destination. */
+	/**
+	 * Atomically write bytes to a safe destination.
+	 *
+	 * @param string $destination Consumer destination.
+	 * @param string $contents Resource bytes.
+	 * @param string $root Consumer root.
+	 * @return void
+	 */
 	private static function atomic_write( $destination, $contents, $root ) {
 		$directory = dirname( $destination );
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_mkdir -- Create native directories for standalone synchronization or the isolated fixture; retain mode and existence checks.

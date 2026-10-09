@@ -25,7 +25,7 @@ $ran_admin_shell = $cases[ $case ];
 <body>
 	<nav class="fixture-toolbar" aria-label="Fixture cases">
 		<?php foreach ( array_keys( $cases ) as $case_name ) : ?>
-			<a href="?case=<?php echo esc_attr( $case_name ); ?>"><?php echo esc_html( $case_name ); ?></a>
+			<a href="?case=<?php echo esc_attr( (string) $case_name ); ?>"><?php echo esc_html( (string) $case_name ); ?></a>
 		<?php endforeach; ?>
 	</nav>
 	<main class="fixture-canvas">

@@ -4,6 +4,7 @@
 use PHPUnit\Framework\TestCase;
 
 final class DistributionContractTest extends TestCase {
+	/** @var string */
 	private $root;
 
 	// phpcs:ignore RANOwnedMethods.NamingConventions.ValidMethodName.NotSnakeCase -- Required PHPUnit lifecycle override.
@@ -41,7 +42,9 @@ final class DistributionContractTest extends TestCase {
 		foreach ( array( 'tests/', 'fixtures/', 'docs/', '.github/', '.agents/', 'AGENTS.md', 'vendor/', 'phpcs.xml.dist', 'phpcs-tooling.xml.dist', 'phpstan.neon.dist', 'phpunit.xml.dist', 'tools/check-coverage.php', 'node_modules/', 'package.json', 'pnpm-lock.yaml', 'pnpm-workspace.yaml', '.node-version', '.stylelintrc.json' ) as $path ) {
 			$this->assertFalse( $zip->locateName( $path ), $path );
 		}
-		$package = json_decode( $zip->getFromName( 'composer.json' ), true, 512, JSON_THROW_ON_ERROR );
+		$package_json = $zip->getFromName( 'composer.json' );
+		$this->assertIsString( $package_json );
+		$package = json_decode( $package_json, true, 512, JSON_THROW_ON_ERROR );
 		$zip->close();
 		// Build-time resources must never acquire Composer runtime loading.
 		foreach ( array( 'autoload', 'include-path', 'target-dir' ) as $field ) {
@@ -81,7 +84,9 @@ final class DistributionContractTest extends TestCase {
 		list( $status, $output ) = $this->run_command( array( $composer, 'update', '--no-interaction', '--no-progress', '--no-plugins', '--no-scripts', '--prefer-dist' ), $consumer );
 		$this->assertSame( 0, $status, $output );
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Read exact native file bytes for standalone configuration, immutable resource verification or isolated fixture evidence.
-		$installed = json_decode( file_get_contents( $consumer . '/vendor/composer/installed.json' ), true, 512, JSON_THROW_ON_ERROR );
+		$source_bytes = file_get_contents( $consumer . '/vendor/composer/installed.json' );
+		$this->assertIsString( $source_bytes );
+		$installed = json_decode( $source_bytes, true, 512, JSON_THROW_ON_ERROR );
 		$this->assertCount( 1, $installed['packages'] );
 		$this->assertSame( 'dist', $installed['packages'][0]['installation-source'] );
 		$this->assertDirectoryDoesNotExist( $consumer . '/vendor/ran/admin-shell/tests' );
@@ -92,6 +97,7 @@ final class DistributionContractTest extends TestCase {
 		// phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase -- Preserve the native DOM/ZipArchive property contract; this is not an owned property.
 		for ( $index = 0; $index < $zip->numFiles; ++$index ) {
 			$path = $zip->getNameIndex( $index );
+			$this->assertIsString( $path );
 			if ( '/' !== substr( $path, -1 ) ) {
 				// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Read exact native file bytes for standalone configuration, immutable resource verification or isolated fixture evidence.
 				$this->assertSame( $zip->getFromIndex( $index ), file_get_contents( $consumer . '/vendor/ran/admin-shell/' . $path ), $path );
@@ -118,7 +124,8 @@ final class DistributionContractTest extends TestCase {
 		$provenance_path = $consumer . '/includes/generated/ran-admin-shell.provenance.json';
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Read exact native file bytes for standalone configuration, immutable resource verification or isolated fixture evidence.
 		$provenance_bytes = file_get_contents( $provenance_path );
-		$provenance       = json_decode( $provenance_bytes, true, 512, JSON_THROW_ON_ERROR );
+		$this->assertIsString( $provenance_bytes );
+		$provenance = json_decode( $provenance_bytes, true, 512, JSON_THROW_ON_ERROR );
 		$this->assertSame( $reference, $provenance['reference'] );
 		foreach ( $provenance['files'] as $path => $digest ) {
 			$this->assertSame( 'sha256:' . hash_file( 'sha256', $consumer . '/' . $path ), $digest );
@@ -130,6 +137,7 @@ final class DistributionContractTest extends TestCase {
 		$css = $consumer . '/assets/ran-admin-shell.css';
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Read exact native file bytes for standalone configuration, immutable resource verification or isolated fixture evidence.
 		$original_css = file_get_contents( $css );
+		$this->assertIsString( $original_css );
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Write exact bytes to the owned native temporary/fixture path; preserve filesystem and distribution observations.
 		file_put_contents( $css, 'drift', FILE_APPEND );
 		list( $status ) = $this->run_command( array_merge( $cli, array( 'check', '--immutable' ) ), $consumer );
@@ -140,7 +148,8 @@ final class DistributionContractTest extends TestCase {
 		$lock_path = $consumer . '/composer.lock';
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Read exact native file bytes for standalone configuration, immutable resource verification or isolated fixture evidence.
 		$lock_bytes = file_get_contents( $lock_path );
-		$lock       = json_decode( $lock_bytes, true, 512, JSON_THROW_ON_ERROR );
+		$this->assertIsString( $lock_bytes );
+		$lock = json_decode( $lock_bytes, true, 512, JSON_THROW_ON_ERROR );
 		$lock['packages-dev'][0]['source']['reference'] = str_repeat( '0', 40 );
 		$this->write_json( $lock_path, $lock );
 		list( $status, $output ) = $this->run_command( array_merge( $cli, array( 'check', '--immutable' ) ), $consumer );
@@ -160,11 +169,20 @@ final class DistributionContractTest extends TestCase {
 		}
 	}
 
+	/**
+	 * @param string $path Owned fixture path.
+	 * @param array<string, mixed> $data Fixture manifest or configuration.
+	 */
 	private function write_json( $path, array $data ): void {
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents, WordPress.WP.AlternativeFunctions.json_encode_json_encode -- Write exact bytes to the owned native temporary/fixture path; preserve filesystem and distribution observations. Native JSON preserves the standalone serialization flags and bytes without loading WordPress.
 		file_put_contents( $path, json_encode( $data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR ) . "\n" );
 	}
 
+	/**
+	 * @param list<string> $command Executable argument vector.
+	 * @param string $directory Consumer working directory.
+	 * @return array{int, string}
+	 */
 	private function run_command( array $command, $directory ): array {
 		$log = $this->root . '/command.log';
 		// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.system_calls_proc_open -- Run the existing isolated CLI/checker command with its argument vector and observed exit status.
@@ -174,6 +192,8 @@ final class DistributionContractTest extends TestCase {
 		fclose( $pipes[0] );
 		$status = proc_close( $process );
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Read exact native file bytes for standalone configuration, immutable resource verification or isolated fixture evidence.
-		return array( $status, file_get_contents( $log ) );
+		$source_bytes = file_get_contents( $log );
+		$this->assertIsString( $source_bytes );
+		return array( $status, $source_bytes );
 	}
 }
