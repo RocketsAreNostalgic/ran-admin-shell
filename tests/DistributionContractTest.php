@@ -4,6 +4,7 @@
 use PHPUnit\Framework\TestCase;
 
 final class DistributionContractTest extends TestCase {
+	/** @var string */
 	private $root;
 
 	// phpcs:ignore RANOwnedMethods.NamingConventions.ValidMethodName.NotSnakeCase -- Required PHPUnit lifecycle override.
@@ -160,11 +161,20 @@ final class DistributionContractTest extends TestCase {
 		}
 	}
 
+	/**
+	 * @param string $path Owned fixture path.
+	 * @param array<string, mixed> $data Fixture manifest or configuration.
+	 */
 	private function write_json( $path, array $data ): void {
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents, WordPress.WP.AlternativeFunctions.json_encode_json_encode -- Write exact bytes to the owned native temporary/fixture path; preserve filesystem and distribution observations. Native JSON preserves the standalone serialization flags and bytes without loading WordPress.
 		file_put_contents( $path, json_encode( $data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR ) . "\n" );
 	}
 
+	/**
+	 * @param list<string> $command Executable argument vector.
+	 * @param string $directory Consumer working directory.
+	 * @return array{int, string|false}
+	 */
 	private function run_command( array $command, $directory ): array {
 		$log = $this->root . '/command.log';
 		// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.system_calls_proc_open -- Run the existing isolated CLI/checker command with its argument vector and observed exit status.

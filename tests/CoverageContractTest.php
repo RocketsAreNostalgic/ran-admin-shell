@@ -4,6 +4,7 @@
 use PHPUnit\Framework\TestCase;
 
 final class CoverageContractTest extends TestCase {
+	/** @var string */
 	private $root;
 
 	// phpcs:ignore RANOwnedMethods.NamingConventions.ValidMethodName.NotSnakeCase -- Required PHPUnit lifecycle override.
@@ -698,6 +699,7 @@ file_get_contents( 'fixture' );
 		$this->assertSame( 0, $status, $output );
 	}
 
+	/** @return array{int, string} */
 	private function check_coverage( bool $use_checker = false, int $short_open_tag = 0 ): array {
 		// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.system_calls_proc_open -- Run the existing isolated CLI/checker command with its argument vector and observed exit status.
 		$process = proc_open( $use_checker ? array( PHP_BINARY, dirname( __DIR__ ) . '/vendor/bin/phpcs', '--standard=' . $this->root . '/phpcs.xml.dist', '--report=json', '--no-colors', '-q', $this->root . '/resources/probe.php' ) : array( PHP_BINARY, '-d', 'memory_limit=128M', '-d', 'short_open_tag=' . $short_open_tag, $this->root . '/tools/check-coverage.php' ), array( array( 'pipe', 'r' ), array( 'pipe', 'w' ), array( 'pipe', 'w' ) ), $pipes );

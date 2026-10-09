@@ -294,7 +294,14 @@ try {
 	exit( 1 );
 }
 
-/** A directory covers descendants, while a file covers only itself. */
+/**
+ * A directory covers descendants, while a file covers only itself.
+ *
+ * @param string $path Maintained relative path.
+ * @param list<string> $roots Configured source roots.
+ * @param string $repository Repository root.
+ * @return bool
+ */
 function covered_by( $path, array $roots, $repository ) {
 	$canonical_root = realpath( $repository );
 	if ( false === $canonical_root ) {
@@ -317,7 +324,14 @@ function covered_by( $path, array $roots, $repository ) {
 	return false;
 }
 
-/** Mirror PHPCS 3.13.6 global file exclusions, including relative patterns. */
+/**
+ * Mirror PHPCS 3.13.6 global file exclusions, including relative patterns.
+ *
+ * @param string $path Maintained relative path.
+ * @param list<array{pattern:string,type:string}> $patterns Configured exclusions.
+ * @param string $repository Repository root.
+ * @return bool
+ */
 function excluded_by_phpcs( $path, array $patterns, $repository ) {
 	foreach ( $patterns as $exclusion ) {
 		$replacements = array(

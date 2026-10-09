@@ -5,7 +5,7 @@ use PHPUnit\Framework\TestCase;
 
 final class RenderContractTest extends TestCase {
 	/** Name-only is a complete shell with no reserved optional regions. */
-	public function test_name_only_has_one_heading_and_no_optional_markup() {
+	public function test_name_only_has_one_heading_and_no_optional_markup(): void {
 		$html = $this->render( array( 'name' => 'RAN Example' ) );
 
 		$this->assertSame( 1, substr_count( $html, '<h1 ' ) );
@@ -20,7 +20,7 @@ final class RenderContractTest extends TestCase {
 	}
 
 	/** Optional values appear independently and unsafe copy is escaped. */
-	public function test_passive_options_render_and_escape() {
+	public function test_passive_options_render_and_escape(): void {
 		$html = $this->render(
 			array(
 				'name'       => '<Example>',
@@ -67,7 +67,7 @@ final class RenderContractTest extends TestCase {
 	}
 
 	/** Invalid images and blank arrays normalize to absence. */
-	public function test_invalid_optional_values_fail_closed() {
+	public function test_invalid_optional_values_fail_closed(): void {
 		$html = $this->render(
 			array(
 				'name'       => 'RAN Example',
@@ -95,7 +95,7 @@ final class RenderContractTest extends TestCase {
 	}
 
 	/** A missing required name renders nothing. */
-	public function test_missing_name_renders_nothing() {
+	public function test_missing_name_renders_nothing(): void {
 		$this->assertSame( '', $this->render( array( 'strapline' => 'No product' ) ) );
 	}
 
@@ -116,7 +116,12 @@ final class RenderContractTest extends TestCase {
 		$this->assertStringNotContainsString( 'phpcs:', $html );
 	}
 
-	/** Render the symbol-free resource in a local scope. */
+	/**
+	 * Render the symbol-free resource in a local scope.
+	 *
+	 * @param array<string, mixed> $configuration Deliberately valid or malformed renderer input.
+	 * @return string
+	 */
 	private function render( array $configuration ) {
 		$ran_admin_shell = $configuration;
 		ob_start();

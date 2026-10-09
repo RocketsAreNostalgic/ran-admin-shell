@@ -6,6 +6,7 @@ use RAN\AdminShell\Tool\SyncCommand;
 
 final class SyncCommandTest extends TestCase {
 	/** Temporary consumer root. */
+	/** @var string */
 	private $root;
 
 	// phpcs:ignore RANOwnedMethods.NamingConventions.ValidMethodName.NotSnakeCase -- Required PHPUnit lifecycle override.
@@ -56,7 +57,7 @@ final class SyncCommandTest extends TestCase {
 	}
 
 	/** Sync and check are deterministic, and drift is detected. */
-	public function test_sync_check_and_drift_detection() {
+	public function test_sync_check_and_drift_detection(): void {
 		$config = $this->load_configuration();
 		SyncCommand::sync( $config );
 
@@ -78,7 +79,7 @@ final class SyncCommandTest extends TestCase {
 	}
 
 	/** Immutable mode requires matching Composer installed metadata. */
-	public function test_immutable_check_rejects_missing_installed_metadata() {
+	public function test_immutable_check_rejects_missing_installed_metadata(): void {
 		$config = $this->load_configuration();
 		SyncCommand::sync( $config );
 
@@ -88,7 +89,7 @@ final class SyncCommandTest extends TestCase {
 	}
 
 	/** CLI rejects path traversal. */
-	public function test_traversal_configuration_is_rejected() {
+	public function test_traversal_configuration_is_rejected(): void {
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Write exact bytes to the owned native temporary/fixture path; preserve filesystem and distribution observations.
 		file_put_contents(
 			$this->root . '/unsafe.json',
@@ -126,12 +127,17 @@ final class SyncCommandTest extends TestCase {
 		$this->assertSame( "RAN Admin Shell requires registered CLI arguments (register_argc_argv).\n", file_get_contents( $log ) );
 	}
 
-	/** Load a valid configuration through the public command seam. */
+	/** @return array{php:string,css:string,provenance:string,root:string} */
 	private function load_configuration() {
 		return SyncCommand::load_configuration( $this->root . '/ran-admin-shell.json' );
 	}
 
-	/** Remove the isolated test tree. */
+	/**
+	 * Remove the isolated test tree.
+	 *
+	 * @param string $path Owned fixture path.
+	 * @return void
+	 */
 	private function remove_tree( $path ) {
 		if ( ! is_dir( $path ) ) {
 			return;

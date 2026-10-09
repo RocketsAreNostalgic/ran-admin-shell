@@ -4,6 +4,7 @@
 use PHPUnit\Framework\TestCase;
 
 final class StandardsContractTest extends TestCase {
+	/** @var string */
 	private $root;
 
 	// phpcs:ignore RANOwnedMethods.NamingConventions.ValidMethodName.NotSnakeCase -- Required PHPUnit lifecycle override.
@@ -157,6 +158,11 @@ final class StandardsContractTest extends TestCase {
 		$this->assertStringContainsString( 'RANOwnedMethods.NamingConventions.ValidMethodName.NotSnakeCase', $output );
 	}
 
+	/**
+	 * @param string $binary Locked checker name.
+	 * @param bool $explicit_paths Include explicit source paths.
+	 * @return array{int, string|false}
+	 */
 	private function run_standard( $binary, $explicit_paths = true ): array {
 		// Explicit bin directory also proves that the custom filter is not an extensionless wildcard.
 		$command = array( PHP_BINARY, dirname( __DIR__ ) . '/vendor/bin/' . $binary, '--standard=phpcs.xml.dist', '-s' );
