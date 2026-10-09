@@ -196,3 +196,35 @@ The guard now rejects that unreviewed configuration before file creation, along
 with altered pattern scope or attributes. No actual profile, resource, runtime,
 dependency or accepted source-exception bytes change in this repair. Exact-pair
 independent review and native CI are required; no merge or release is authorized.
+
+
+## WordPress CSS alignment — 9 October 2026
+
+Ben authorized source CSS alignment under #28, superseding the historical
+resource-byte preservation boundary for this bounded change. Resource PHP,
+rendering contracts and all synchronization safeguards remain unchanged.
+
+The source now adopts the shared WordPress CSS baseline, with existing BEM
+element/modifier names accommodated. Stylelint autofixes the case-insensitive
+`currentColor` spelling and the first-media blank lines; WordPress Prettier removes
+those blank lines again. The conflict also reproduces with published WordPress
+Prettier config 4.57.0 / Prettier 3.9.9. The reviewed local
+`rule-empty-line-before` option therefore adds only `first-nested` to the existing
+`after-comment` ignore list. It reconciles formatting without disabling other
+blank-line checks or semantic CSS rules. This is documented local interoperability,
+not a claim of exact upstream rule parity.
+
+Stylelint cannot automatically reorder selectors safely. Plain navigation
+link rules move before title-link states, and navigation states follow both plain
+link groups after inspection of the renderer's
+disjoint sibling title and navigation roles. Selectors, declarations and media
+contexts remain identical, apart from case-insensitive `currentcolor` spelling.
+
+Node 24.21.0 / pnpm 11.13.1 use a frozen strict-peer lock. Recursive source CSS
+lint and WordPress formatting feed terminal Quality alongside the unchanged
+PHP floor/current contract. Node development files are excluded from the committed
+Composer archive and covered by its existing real-install distribution proof.
+Actual-head native CI and independent review establish final qualification.
+Consumer CSS bytes and provenance need explicit resynchronization to the reviewed
+source revision; Core remains separately owned. No publication, release or UI
+acceptance follows from this source alignment.

@@ -13,7 +13,12 @@ sync command, commit the synchronized PHP/CSS/provenance files and ship those
 consumer-owned files. Consumers must not ship this package or Composer vendor
 files in WordPress plugin archives.
 
-Run `composer check` before handoff. Use Conventional Commits. Do not tag,
+Run `composer check` and `pnpm check` before handoff. Use Node 24.21.0 /
+pnpm 11.13.1 with the frozen strict-peer lock. CSS lint and formatting cover
+`resources/**/*.css`; fix authoritative source rather than generated consumer
+copies. Source CSS alignment authorized under #28 requires reviewed immutable
+consumer resynchronization; preserve resource PHP bytes. Use Conventional
+Commits. Do not tag,
 publish to Packagist or create a release without separate owner authorization.
 
 ## External AI agent prohibition
@@ -52,7 +57,7 @@ selection uses its existing allowlist and does not require a mutation nonce.
 
 `check:coverage` requires direct level-5 PHPStan coverage of every maintained PHP
 file, including tests and previews, and rejects blanket/persistent/legacy suppression
-comments without executing source. Preserve resource bytes, immutable reference
-checks, destination/link fences, atomic replacement, cleanup and consumer removal
+comments without executing source. Preserve resource PHP bytes and the reviewed
+CSS alignment/synchronization boundary, immutable reference checks, destination/link fences, atomic replacement, cleanup and consumer removal
 proofs. Read docs/quality-acceptance.md before widening these boundaries. No package
 publication or consumer lock/provenance update follows from profile acceptance.

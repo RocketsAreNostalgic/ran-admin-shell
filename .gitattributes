@@ -11,3 +11,10 @@
 /phpcs-tooling.xml.dist export-ignore
 /phpstan.neon.dist export-ignore
 /tools/check-coverage.php export-ignore
+
+/node_modules export-ignore
+/package.json export-ignore
+/pnpm-lock.yaml export-ignore
+/pnpm-workspace.yaml export-ignore
+/.node-version export-ignore
+/.stylelintrc.json export-ignore

@@ -1,0 +1,30 @@
+{
+	"name": "ran-admin-shell-quality",
+	"private": true,
+	"description": "Development CSS quality tooling for RAN Admin Shell resources.",
+	"scripts": {
+		"lint:css": "stylelint \"resources/**/*.css\"",
+		"format:check": "prettier --check \"resources/**/*.css\"",
+		"format": "prettier --write \"resources/**/*.css\"",
+		"check": "pnpm lint:css && pnpm format:check"
+	},
+	"devDependencies": {
+		"@rocketsarenostalgic/quality-config": "github:RocketsAreNostalgic/ran-quality-config#c7ca14dfadb6584ff3baa1884579f59b2b85c757",
+		"@wordpress/prettier-config": "4.51.0",
+		"@wordpress/stylelint-config": "26.1.0",
+		"prettier": "3.9.5",
+		"react": "18.3.1",
+		"react-dom": "18.3.1",
+		"stylelint": "17.14.1",
+		"stylelint-scss": "7.2.0"
+	},
+	"engines": {
+		"node": ">=24.21.0 <25",
+		"pnpm": ">=11 <12"
+	},
+	"volta": {
+		"node": "24.21.0"
+	},
+	"packageManager": "pnpm@11.13.1",
+	"prettier": "@rocketsarenostalgic/quality-config/prettier"
+}

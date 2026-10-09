@@ -2,3 +2,4 @@
 /.phpunit.result.cache
 /.phpcs-cache
 /.phpstan-cache/
+/node_modules/
