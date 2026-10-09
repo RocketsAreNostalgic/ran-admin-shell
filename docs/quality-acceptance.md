@@ -1,5 +1,30 @@
 # Admin Shell next-beta PHP profile acceptance
 
+## PHPStan Level 8 proposal — #152
+
+All sixteen maintained PHP entrypoints now enter the blocking Level 8 profile
+with the same PHP 8.0 target, recursive role scopes, locked dependencies and
+independent coverage discovery. The guard rejects levels below eight; real
+Composer-runner nullable probes cover resources, tools, tests, previews and the
+extensionless CLI, while the same probes remain clean at Level 7. Existing
+malformed fixtures, bootstrap/selection controls and narrow standards exceptions
+remain. Resource PHP and CSS bytes are unchanged.
+
+Accurate producer/consumer annotations describe the validated synchronization
+configuration, resource mapping, provenance and immutable metadata. Decoded lock
+JSON retains its runtime checks. Tests assert successful native reads at their
+actual producers. XML query failures and unreadable coverage metadata fail closed.
+A failed resource or provenance hash now returns drift rather than passing false
+to hash_equals; the real CLI regression forces a native hashing failure and
+verifies exit 1 with unchanged consumer-owned bytes. Atomic replacement, link
+fences, JSON flags/newline and installed metadata checks remain unchanged.
+
+Final qualification requires the committed-HEAD Composer/archive-consumer proof,
+frozen Node 24.21.0 / pnpm 11.13.1 checks, native PHP 8.0/8.5 CI and independent
+review of the actual PR pair. This source proposal does not publish the package,
+update consumer pins/provenance or claim installed WordPress/UI acceptance.
+The dated Level 5 and production-only evidence below is historical.
+
 ## Maintained-file analysis correction — 6 October 2026
 
 The current owner instruction requires every maintained PHP file at level 5,

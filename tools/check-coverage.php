@@ -16,8 +16,8 @@ try {
 		array()
 	);
 	$level     = $container->getParameter( 'level' );
-	if ( 'max' !== $level && (int) $level < 5 ) {
-		throw new RuntimeException( 'Maintained PHP requires PHPStan level 5 or higher.' );
+	if ( 'max' !== $level && (int) $level < 8 ) {
+		throw new RuntimeException( 'Maintained PHP requires PHPStan level 8 or higher.' );
 	}
 	if ( array() !== $container->getParameter( 'ignoreErrors' ) ) {
 		throw new RuntimeException( 'PHPStan ignored errors need explicit review.' );
@@ -91,7 +91,11 @@ try {
 			? array( 'RANWordPressLibrary', 'RANOwnedMethods' )
 			: array( 'RAN', 'WordPress-Extra', 'RANOwnedMethods', 'PHPCompatibility' );
 		$active_rules   = array();
-		foreach ( $xpath->query( '/ruleset/rule[@ref]' ) as $rule ) {
+		$rule_elements  = $xpath->query( '/ruleset/rule[@ref]' );
+		if ( false === $rule_elements ) {
+			throw new RuntimeException( 'PHPCS rule query failed: ' . $ruleset );
+		}
+		foreach ( $rule_elements as $rule ) {
 			if ( ! $rule instanceof DOMElement ) {
 				throw new RuntimeException( 'PHPCS rule element cannot be read: ' . $ruleset );
 			}
@@ -103,26 +107,26 @@ try {
 			}
 		}
 		$compatibility = $xpath->query( '//config[@name="testVersion"]' );
-		if ( 1 !== count( $compatibility ) || ! $compatibility->item( 0 ) instanceof DOMElement || '8.0-' !== $compatibility->item( 0 )->getAttribute( 'value' )
+		if ( false === $compatibility || 1 !== count( $compatibility ) || ! $compatibility->item( 0 ) instanceof DOMElement || '8.0-' !== $compatibility->item( 0 )->getAttribute( 'value' )
 			|| 2 !== $compatibility->item( 0 )->attributes->length ) {
 			throw new RuntimeException( 'PHPCS compatibility target must remain 8.0-: ' . $ruleset );
 		}
 		if ( 'phpcs.xml.dist' === $ruleset ) {
 			$wp_floor = $xpath->query( '//config[@name="minimum_wp_version" or @name="minimum_supported_wp_version"]' );
-			if ( 1 !== count( $wp_floor ) || ! $wp_floor->item( 0 ) instanceof DOMElement
+			if ( false === $wp_floor || 1 !== count( $wp_floor ) || ! $wp_floor->item( 0 ) instanceof DOMElement
 				|| 'minimum_wp_version' !== $wp_floor->item( 0 )->getAttribute( 'name' )
 				|| '6.5' !== $wp_floor->item( 0 )->getAttribute( 'value' ) || 2 !== $wp_floor->item( 0 )->attributes->length ) {
 				throw new RuntimeException( 'PHPCS WordPress compatibility floor must remain 6.5.' );
 			}
 		} else {
 			$cli_filter = $xpath->query( '/ruleset/arg[@name="filter"]' );
-			if ( 1 !== count( $cli_filter ) || ! $cli_filter->item( 0 ) instanceof DOMElement
+			if ( false === $cli_filter || 1 !== count( $cli_filter ) || ! $cli_filter->item( 0 ) instanceof DOMElement
 				|| 'tools/StandardsFilter.php' !== $cli_filter->item( 0 )->getAttribute( 'value' ) || 2 !== $cli_filter->item( 0 )->attributes->length ) {
 				throw new RuntimeException( 'PHPCS requires its sole extensionless CLI filter.' );
 			}
 		}
 		$root_exclusions = $xpath->query( '/ruleset/exclude-pattern' );
-		if ( 1 !== count( $root_exclusions ) || 'vendor/*' !== (string) $root_exclusions->item( 0 )->nodeValue
+		if ( false === $root_exclusions || 1 !== count( $root_exclusions ) || ! $root_exclusions->item( 0 ) instanceof DOMElement || 'vendor/*' !== (string) $root_exclusions->item( 0 )->nodeValue
 			|| 0 !== $root_exclusions->item( 0 )->attributes->length ) {
 			throw new RuntimeException( 'PHPCS root exclusion needs review: ' . $ruleset );
 		}
@@ -232,7 +236,11 @@ try {
 	}
 
 	// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Read exact native file bytes for standalone configuration, immutable resource verification or isolated fixture evidence.
-	$manifest = json_decode( file_get_contents( $root . '/composer.json' ), true, 512, JSON_THROW_ON_ERROR );
+	$manifest_json = file_get_contents( $root . '/composer.json' );
+	if ( false === $manifest_json ) {
+		throw new RuntimeException( 'Cannot read the coverage manifest.' );
+	}
+	$manifest = json_decode( $manifest_json, true, 512, JSON_THROW_ON_ERROR );
 	foreach ( $manifest['bin'] ?? array() as $command ) {
 		// StandardsFilter.php selects only this extensionless entrypoint.
 		if ( 'bin/ran-admin-shell' !== $command ) {
@@ -269,7 +277,10 @@ try {
 			}
 			preg_match_all( '~phpcs:ignore\b([^\r\n]*)~i', $token[1], $ignores );
 			foreach ( $ignores[1] as $ignore ) {
-				$ignore     = preg_replace( '~\s*\*/\s*$~', '', $ignore );
+				$ignore = preg_replace( '~\s*\*/\s*$~', '', $ignore );
+				if ( null === $ignore ) {
+					throw new RuntimeException( 'Cannot inspect a standards ignore.' );
+				}
 				$parts      = explode( '--', $ignore, 2 );
 				$diagnostic = '[A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*){3}';
 				if ( 2 !== count( $parts ) || ! preg_match( '~^\s*' . $diagnostic . '(?:\s*,\s*' . $diagnostic . ')*\s*$~', $parts[0] )

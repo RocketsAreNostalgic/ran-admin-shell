@@ -73,7 +73,7 @@ render/synchronization tests, in that order.
   path outside either gate, or a standards exclusion of maintained
   PHP, fails the check. Blanket, persistent (`phpcs:disable`) and legacy suppression comments also fail.
   New extensionless Composer commands or imported PHPStan configurations require
-  a reviewed guard update. Tests and previews require the same direct level-5 analysis as production
+  a reviewed guard update. Tests and previews require the same direct Level 8 analysis as production
   and tooling. Installed dependencies remain excluded.
 - `composer lint:syntax` parses PHP in `resources/`, `tools/`, `tests/` and
   `fixtures/`, plus the extensionless `bin/ran-admin-shell` entrypoint. Missing
@@ -126,7 +126,7 @@ Node dependencies and configuration stay out of Composer exports.
 
 ### Static analysis
 
-`composer analyze` runs locked PHPStan at blocking level 5 with a PHP 8.0
+`composer analyze` runs locked PHPStan at blocking Level 8 with a PHP 8.0
 language target and a 512 MB memory limit; `composer check` includes it.
 The CLI requires registered command-line arguments and exits with a clear
 diagnostic if `$argv` is unavailable (for example, when `register_argc_argv`
@@ -141,8 +141,8 @@ symbol discovery only; dependency bodies are not first-party analysis roots.
 The stubs describe APIs, not proof of an installed WordPress runtime.
 
 Tests and preview fixtures are now included in direct analysis: all 16 maintained
-PHP entrypoints pass level 5, with no file exemptions or ignored diagnostics.
-The coverage gate rejects a level below 5 and development-role omissions.
+PHP entrypoints pass Level 8, with no file exemptions or ignored diagnostics.
+The coverage gate rejects a level below 8 and development-role omissions.
 Their existing syntax, common standards, compatibility and PHPUnit checks remain.
 Consumer-owned synchronized copies are verified through
 existing render/sync/provenance tests rather than scanned in sibling checkouts.

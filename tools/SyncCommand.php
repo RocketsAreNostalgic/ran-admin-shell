@@ -82,7 +82,12 @@ final class SyncCommand {
 		$resources = self::resources( $config );
 
 		foreach ( $resources as $destination => $source ) {
-			if ( ! is_file( $destination ) || is_link( $destination ) || ! hash_equals( hash_file( 'sha256', $source ), hash_file( 'sha256', $destination ) ) ) {
+			if ( ! is_file( $destination ) || is_link( $destination ) ) {
+				return false;
+			}
+			$source_hash      = hash_file( 'sha256', $source );
+			$destination_hash = hash_file( 'sha256', $destination );
+			if ( false === $source_hash || false === $destination_hash || ! hash_equals( $source_hash, $destination_hash ) ) {
 				return false;
 			}
 		}
@@ -95,9 +100,11 @@ final class SyncCommand {
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.json_encode_json_encode -- Native JSON preserves the standalone serialization flags and bytes without loading WordPress.
 		$expected = (string) json_encode( self::provenance( $config, $resources ), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES ) . "\n";
 
-		return is_file( $config['provenance'] )
-			&& ! is_link( $config['provenance'] )
-			&& hash_equals( hash( 'sha256', $expected ), hash_file( 'sha256', $config['provenance'] ) );
+		if ( ! is_file( $config['provenance'] ) || is_link( $config['provenance'] ) ) {
+			return false;
+		}
+		$provenance_hash = hash_file( 'sha256', $config['provenance'] );
+		return false !== $provenance_hash && hash_equals( hash( 'sha256', $expected ), $provenance_hash );
 	}
 
 	/**

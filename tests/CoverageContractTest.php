@@ -23,7 +23,7 @@ final class CoverageContractTest extends TestCase {
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Write exact bytes to the owned native temporary/fixture path; preserve filesystem and distribution observations.
 		file_put_contents( $this->root . '/composer.json', '{"bin":["bin/ran-admin-shell"]}' );
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Write exact bytes to the owned native temporary/fixture path; preserve filesystem and distribution observations.
-		file_put_contents( $this->root . '/phpstan.neon.dist', "parameters:\n    level: 5\n    phpVersion: 80000\n    paths:\n        - bin/ran-admin-shell\n        - resources\n        - tools\n" );
+		file_put_contents( $this->root . '/phpstan.neon.dist', "parameters:\n    level: 8\n    phpVersion: 80000\n    paths:\n        - bin/ran-admin-shell\n        - resources\n        - tools\n" );
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Write exact bytes to the owned native temporary/fixture path; preserve filesystem and distribution observations.
 		file_put_contents( $this->root . '/phpcs.xml.dist', '<ruleset><config name="minimum_wp_version" value="6.5"/><config name="testVersion" value="8.0-"/><file>resources</file><rule ref="RANWordPressLibrary"/><rule ref="RANOwnedMethods"/><exclude-pattern>vendor/*</exclude-pattern></ruleset>' );
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Write exact bytes to the owned native temporary/fixture path; preserve filesystem and distribution observations.
@@ -74,6 +74,7 @@ final class CoverageContractTest extends TestCase {
 		file_put_contents( $this->root . '/resources/second.php', '<?php return 2;' );
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Read exact native file bytes for standalone configuration, immutable resource verification or isolated fixture evidence.
 		$configuration = file_get_contents( $this->root . '/phpstan.neon.dist' );
+		$this->assertIsString( $configuration );
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Write exact bytes to the owned native temporary/fixture path; preserve filesystem and distribution observations.
 		file_put_contents( $this->root . '/phpstan.neon.dist', str_replace( "- resources\n", "- resources/admin-shell.php\n", $configuration ) );
 		list( $status, $output ) = $this->check_coverage();
@@ -94,19 +95,61 @@ final class CoverageContractTest extends TestCase {
 		$this->assertStringContainsString( 'PHPCS root exclusion needs review: phpcs.xml.dist', $output );
 	}
 
-	public function test_analysis_level_cannot_drop_below_five(): void {
+	public function test_analysis_level_cannot_drop_below_eight(): void {
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Preserve the isolated analysis configuration for the lower-level regression.
 		$configuration = file_get_contents( $this->root . '/phpstan.neon.dist' );
+		$this->assertIsString( $configuration );
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Lowering the real checker level must fail the maintained-file contract.
-		file_put_contents( $this->root . '/phpstan.neon.dist', str_replace( 'level: 5', 'level: 4', $configuration ) );
+		file_put_contents( $this->root . '/phpstan.neon.dist', str_replace( 'level: 8', 'level: 7', $configuration ) );
 		list( $status, $output ) = $this->check_coverage();
 		$this->assertNotSame( 0, $status );
-		$this->assertStringContainsString( 'Maintained PHP requires PHPStan level 5 or higher.', $output );
+		$this->assertStringContainsString( 'Maintained PHP requires PHPStan level 8 or higher.', $output );
+	}
+
+	public function test_level_eight_nullable_errors_fail_the_real_runner_in_every_maintained_role(): void {
+		foreach ( array( 'tests', 'fixtures' ) as $directory ) {
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_mkdir -- Create the empty maintained development roles in the isolated analyzer fixture.
+			mkdir( $this->root . '/' . $directory );
+		}
+		copy( dirname( __DIR__ ) . '/composer.json', $this->root . '/composer.json' );
+		copy( dirname( __DIR__ ) . '/phpstan.neon.dist', $this->root . '/phpstan.neon.dist' );
+		$composer = getenv( 'COMPOSER_BINARY' );
+		$composer = $composer ? $composer : 'composer';
+		foreach ( array( 'resources', 'tools', 'tests', 'fixtures', 'bin' ) as $directory ) {
+			$probe = $this->root . '/' . $directory . '/future-nullable.php';
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Keep the deliberately invalid nullable argument in every maintained role; never execute the probe.
+			file_put_contents( $probe, "<?php\nfunction ran_admin_nullable_probe(?string \$value): string { return strtolower( \$value ); }\n" );
+			// bin has one explicit extensionless entrypoint; append its probe there.
+			if ( 'bin' === $directory ) {
+				// phpcs:ignore WordPress.WP.AlternativeFunctions.rename_rename -- Replace only the isolated empty CLI fixture so its explicitly selected entrypoint contains the same deliberate error.
+				rename( $probe, $this->root . '/bin/ran-admin-shell' );
+				$probe = $this->root . '/bin/ran-admin-shell';
+			}
+			$log = $this->root . '/nullable.log';
+			// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.system_calls_proc_open -- Invoke the actual Composer analysis script against the isolated maintained role and observe its blocking failure.
+			$process = proc_open( array( $composer, '--no-interaction', '--no-plugins', '--working-dir=' . $this->root, 'analyze', '--', '--error-format=json' ), array( array( 'pipe', 'r' ), array( 'file', $log, 'w' ), array( 'file', $log, 'a' ) ), $pipes );
+			$this->assertIsResource( $process );
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose -- Close the owned input pipe before collecting the real runner's failure.
+			fclose( $pipes[0] );
+			$this->assertNotSame( 0, proc_close( $process ) );
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Inspect the real analyzer's owned JSON log for the nullable diagnostic and selected file.
+			$output = file_get_contents( $log );
+			$this->assertIsString( $output );
+			$this->assertStringContainsString( 'argument.type', $output );
+			$this->assertStringContainsString( $probe, $output );
+			$lines = array();
+			// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.system_calls_exec -- Contrast the same invalid probe with Level 7, where this nullable diagnostic is intentionally not enforced.
+			exec( escapeshellarg( PHP_BINARY ) . ' ' . escapeshellarg( dirname( __DIR__ ) . '/vendor/bin/phpstan' ) . ' analyse --no-progress --level=7 --configuration=' . escapeshellarg( $this->root . '/phpstan.neon.dist' ) . ' ' . escapeshellarg( $probe ), $lines, $status );
+			$this->assertSame( 0, $status, implode( "\n", $lines ) );
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.unlink_unlink -- Remove only the owned deliberate probe before testing the next role.
+			unlink( $probe );
+		}
 	}
 
 	public function test_imported_analysis_and_additional_composer_cli_require_review(): void {
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Read exact native file bytes for standalone configuration, immutable resource verification or isolated fixture evidence.
 		$analysis = file_get_contents( $this->root . '/phpstan.neon.dist' );
+		$this->assertIsString( $analysis );
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Write exact bytes to the owned native temporary/fixture path; preserve filesystem and distribution observations.
 		file_put_contents( $this->root . '/phpstan.neon.dist', "includes:\n    - shared.neon\n" . $analysis );
 		list( $status, $output ) = $this->check_coverage();
@@ -140,17 +183,24 @@ final class CoverageContractTest extends TestCase {
 			$this->assertStringContainsString( 'PHPCS does not cover: ' . $directory . '/future.php', $output );
 			$resource_config = $this->root . '/phpcs.xml.dist';
 			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents, WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Exercise a misrouted fixture profile in the isolated checker layout.
-			file_put_contents( $resource_config, str_replace( '</ruleset>', '<file>' . $directory . '</file></ruleset>', file_get_contents( $resource_config ) ) );
+			$source_bytes = file_get_contents( $resource_config );
+			$this->assertIsString( $source_bytes );
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Mutate the exact validated bytes in the isolated checker fixture.
+			file_put_contents( $resource_config, str_replace( '</ruleset>', '<file>' . $directory . '</file></ruleset>', $source_bytes ) );
 			list( $status, $output ) = $this->check_coverage();
 			$this->assertNotSame( 0, $status );
 			$this->assertStringContainsString( 'PHPCS does not cover: ' . $directory . '/future.php in phpcs-tooling.xml.dist', $output );
 			$config = $this->root . '/phpcs-tooling.xml.dist';
 			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents, WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Write exact bytes to the owned native temporary/fixture path; preserve filesystem and distribution observations. Read exact native file bytes for standalone configuration, immutable resource verification or isolated fixture evidence.
-			file_put_contents( $config, str_replace( '</ruleset>', '<file>' . $directory . '</file></ruleset>', file_get_contents( $config ) ) );
+			$source_bytes = file_get_contents( $config );
+			$this->assertIsString( $source_bytes );
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Mutate the exact validated bytes in the isolated checker fixture.
+			file_put_contents( $config, str_replace( '</ruleset>', '<file>' . $directory . '</file></ruleset>', $source_bytes ) );
 			list( $status, $output ) = $this->check_coverage();
 			$this->assertSame( 0, $status, $output );
 			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Save the exact isolated profile before testing its own exclusion.
 			$tooling_config = file_get_contents( $config );
+			$this->assertIsString( $tooling_config );
 			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Resource coverage must not rescue a standalone exclusion.
 			file_put_contents( $config, str_replace( '</ruleset>', '<exclude-pattern>' . $directory . '/future.php</exclude-pattern></ruleset>', $tooling_config ) );
 			list( $status, $output ) = $this->check_coverage();
@@ -281,6 +331,7 @@ file_get_contents( 'fixture' );
 		foreach ( $profiles as $profile => $rules ) {
 			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Preserve the isolated healthy profile for each missing-rule mutation.
 			$original = file_get_contents( $this->root . '/' . $profile );
+			$this->assertIsString( $original );
 			foreach ( $rules as $rule ) {
 				foreach ( array( '', '<rule ref="Generic.PHP.Syntax"/>' ) as $replacement ) {
 					// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Remove or replace exactly one required ancestor in the disposable profile.
@@ -298,6 +349,7 @@ file_get_contents( 'fixture' );
 	public function test_missing_resource_baseline_hides_real_security_diagnostics(): void {
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Mutate only the isolated resource profile while retaining the owned-method rule.
 		$original = file_get_contents( $this->root . '/phpcs.xml.dist' );
+		$this->assertIsString( $original );
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Supply inert unescaped request output to the locked checker without executing it.
 		file_put_contents( $this->root . '/resources/probe.php', "<?php\n// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Controlled preescaped fixture.\necho \$preescaped;\necho \$_GET['x'];\n" );
 		list( $status, $output ) = $this->check_coverage( true );
@@ -337,6 +389,7 @@ file_get_contents( 'fixture' );
 		foreach ( array( 'phpcs.xml.dist', 'phpcs-tooling.xml.dist' ) as $profile ) {
 			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Preserve the actual isolated dependency exclusion before scope mutations.
 			$original = file_get_contents( $this->root . '/' . $profile );
+			$this->assertIsString( $original );
 			foreach ( array(
 				str_replace( '</ruleset>', '<exclude-pattern>*/not-yet-created/*</exclude-pattern></ruleset>', $original ),
 				str_replace( 'vendor/*', '*/vendor/*', $original ),
@@ -404,6 +457,7 @@ file_get_contents( 'fixture' );
 	public function test_effective_analysis_extensions_and_stubs_cannot_hide_source(): void {
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Preserve the isolated PHPStan configuration for each omission control.
 		$configuration = file_get_contents( $this->root . '/phpstan.neon.dist' );
+		$this->assertIsString( $configuration );
 		foreach ( array(
 			"    fileExtensions!: [inc]\n" => 'PHPStan does not directly cover: resources/admin-shell.php',
 			"    stubFiles:\n        - resources/admin-shell.php\n" => 'PHPStan configured stub files need explicit coverage review.',
@@ -419,6 +473,7 @@ file_get_contents( 'fixture' );
 	public function test_effective_ignored_errors_cannot_hide_actual_diagnostics(): void {
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Preserve the isolated native analyzer configuration for the suppression controls.
 		$configuration = file_get_contents( $this->root . '/phpstan.neon.dist' );
+		$this->assertIsString( $configuration );
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Create inert source whose invalid return is analyzed, never executed.
 		file_put_contents( $this->root . '/resources/probe.php', "<?php\nfunction ran_admin_shell_ignored_error_probe(): int { return 'invalid'; }\n" );
 		foreach ( array( '', "    ignoreErrors:\n        - '#.*#'\n", "    ignoreErrors:\n        - identifier: return.type\n" ) as $override ) {
@@ -445,6 +500,7 @@ file_get_contents( 'fixture' );
 	public function test_executable_bootstrap_cannot_exit_before_analysis(): void {
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Preserve the isolated analyzer configuration while reproducing executable bootstrap termination.
 		$configuration = file_get_contents( $this->root . '/phpstan.neon.dist' );
+		$this->assertIsString( $configuration );
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Write inert invalid source for actual analyzer diagnostic evidence.
 		file_put_contents( $this->root . '/resources/probe.php', "<?php\nfunction ran_admin_bootstrap_probe(): int { return 'invalid'; }\n" );
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- The isolated bootstrap exits only its dedicated analyzer subprocess and never the test runner.
@@ -472,7 +528,8 @@ file_get_contents( 'fixture' );
 	public function test_bundled_bootstrap_identities_and_multiplicity_are_fixed(): void {
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Preserve the isolated configuration while checking the exact locked runtime bootstrap inventory.
 		$configuration = file_get_contents( $this->root . '/phpstan.neon.dist' );
-		$runtime       = 'phar://' . realpath( dirname( __DIR__ ) . '/vendor/phpstan/phpstan/phpstan.phar' ) . '/stubs/runtime/';
+		$this->assertIsString( $configuration );
+		$runtime = 'phar://' . realpath( dirname( __DIR__ ) . '/vendor/phpstan/phpstan/phpstan.phar' ) . '/stubs/runtime/';
 		foreach ( array(
 			"    bootstrapFiles:\n        - '" . $runtime . "ReflectionUnionType.php'\n",
 			"    bootstrapFiles:\n        - '" . $runtime . "Unreviewed.php'\n",
@@ -503,8 +560,9 @@ file_get_contents( 'fixture' );
 	public function test_compatibility_targets_cannot_hide_newer_native_apis(): void {
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Preserve the isolated compatibility configuration for controlled target mutations.
 		$configuration = file_get_contents( $this->root . '/phpstan.neon.dist' );
+		$this->assertIsString( $configuration );
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Write inert PHP 8.1 API usage for the locked analyzers, never execute it.
-		file_put_contents( $this->root . '/tools/probe.php', "<?php\nfunction ran_compatibility_probe( array \$values ): bool { return array_is_list( \$values ); }\n" );
+		file_put_contents( $this->root . '/tools/probe.php', "<?php\n/** @param array<mixed> \$values */\nfunction ran_compatibility_probe( array \$values ): bool { return array_is_list( \$values ); }\n" );
 		foreach ( array( 80000, 80100 ) as $version ) {
 			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Change only the isolated analyzer compatibility target.
 			file_put_contents( $this->root . '/phpstan.neon.dist', str_replace( '80000', (string) $version, $configuration ) );
@@ -525,6 +583,7 @@ file_get_contents( 'fixture' );
 		foreach ( array( 'phpcs.xml.dist', 'phpcs-tooling.xml.dist' ) as $ruleset ) {
 			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Preserve the isolated profile for independent compatibility mutations.
 			$original = file_get_contents( $this->root . '/' . $ruleset );
+			$this->assertIsString( $original );
 			foreach ( array( '', '<config name="testVersion" value="8.1-"/>', '<config name="testVersion" value="8.0-"/><config name="testVersion" value="8.1-"/>' ) as $replacement ) {
 				// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Remove, raise or duplicate only the isolated PHPCS compatibility setting.
 				file_put_contents( $this->root . '/' . $ruleset, str_replace( '<config name="testVersion" value="8.0-"/>', $replacement, $original ) );
@@ -647,6 +706,7 @@ file_get_contents( 'fixture' );
 		) as $ruleset => $control ) {
 			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Preserve the isolated profile while testing required configuration multiplicity and values.
 			$original = file_get_contents( $this->root . '/' . $ruleset );
+			$this->assertIsString( $original );
 			foreach ( array( '', $control[1], $control[0] . $control[0] ) as $replacement ) {
 				// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Mutate only the isolated required configuration element.
 				file_put_contents( $this->root . '/' . $ruleset, str_replace( $control[0], $replacement, $original ) );
@@ -662,6 +722,7 @@ file_get_contents( 'fixture' );
 	public function test_active_wordpress_floor_controls_real_deprecation_severity(): void {
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Preserve the isolated resource profile for the active-key versus obsolete-key diagnostic control.
 		$original = file_get_contents( $this->root . '/phpcs.xml.dist' );
+		$this->assertIsString( $original );
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Probe a known WordPress 6.6 deprecation without executing WordPress.
 		file_put_contents( $this->root . '/resources/probe.php', "<?php\nwp_render_elements_support();\n" );
 		foreach ( array( 'minimum_wp_version', 'minimum_supported_wp_version' ) as $key ) {

@@ -55,7 +55,7 @@ filesystem/stream/process operations, immutable JSON bytes and internal exceptio
 data retain exact local reasons, never blanket category waivers. Read-only preview
 selection uses its existing allowlist and does not require a mutation nonce.
 
-`check:coverage` requires direct level-5 PHPStan coverage of every maintained PHP
+`check:coverage` requires direct Level 8 PHPStan coverage of every maintained PHP
 file, including tests and previews, and rejects blanket/persistent/legacy suppression
 comments without executing source. Preserve resource PHP bytes and the reviewed
 CSS alignment/synchronization boundary, immutable reference checks, destination/link fences, atomic replacement, cleanup and consumer removal

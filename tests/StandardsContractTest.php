@@ -61,6 +61,7 @@ final class StandardsContractTest extends TestCase {
 		$this->assertStringContainsString( 'PHPCompatibility.FunctionUse.RemovedFunctions', $output );
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Preserve the isolated tooling profile for the filter-removal control.
 		$profile = file_get_contents( $this->root . '/phpcs.xml.dist' );
+		$this->assertIsString( $profile );
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Remove only the custom filter to demonstrate why the independent guard must require it.
 		file_put_contents( $this->root . '/phpcs.xml.dist', str_replace( '<arg name="filter" value="tools/StandardsFilter.php"/>', '', $profile ) );
 		list( $status, $output ) = $this->run_standard( 'phpcs', false );
@@ -90,6 +91,7 @@ final class StandardsContractTest extends TestCase {
 		$this->assertSame( 1, $status ); // PHPCBF uses 1 when all fixable errors were fixed.
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Read exact native file bytes for standalone configuration, immutable resource verification or isolated fixture evidence.
 		$fixed = file_get_contents( $cli );
+		$this->assertIsString( $fixed );
 		$this->assertNotSame( $before, $fixed );
 		list( $status ) = $this->run_standard( 'phpcs' );
 		$this->assertSame( 0, $status );
@@ -109,6 +111,7 @@ final class StandardsContractTest extends TestCase {
 		file_put_contents( $this->root . '/vendor/bin/phpcbf', '<?php require ' . var_export( dirname( __DIR__ ) . '/vendor/bin/phpcbf', true ) . ';' );
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Read exact native file bytes for standalone configuration, immutable resource verification or isolated fixture evidence.
 		$tooling = file_get_contents( $this->root . '/phpcs.xml.dist' );
+		$this->assertIsString( $tooling );
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Write exact bytes to the owned native temporary/fixture path; preserve filesystem and distribution observations.
 		file_put_contents( $this->root . '/phpcs-tooling.xml.dist', $tooling );
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Write exact bytes to the owned native temporary/fixture path; preserve filesystem and distribution observations.
@@ -125,7 +128,11 @@ final class StandardsContractTest extends TestCase {
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose -- Close the owned subprocess pipe; WordPress filesystem wrappers do not own this stream.
 		fclose( $pipes[0] );
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Read exact native file bytes for standalone configuration, immutable resource verification or isolated fixture evidence.
-		$this->assertSame( 1, proc_close( $process ), file_get_contents( $log ) );
+		$status = proc_close( $process );
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Read the owned log only after the formatter process exits.
+		$source_bytes = file_get_contents( $log );
+		$this->assertIsString( $source_bytes );
+		$this->assertSame( 1, $status, $source_bytes );
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Read exact native file bytes for standalone configuration, immutable resource verification or isolated fixture evidence.
 		$this->assertNotSame( $source, file_get_contents( $this->root . '/resources/example.php' ) );
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Read exact native file bytes for standalone configuration, immutable resource verification or isolated fixture evidence.
@@ -161,7 +168,7 @@ final class StandardsContractTest extends TestCase {
 	/**
 	 * @param string $binary Locked checker name.
 	 * @param bool $explicit_paths Include explicit source paths.
-	 * @return array{int, string|false}
+	 * @return array{int, string}
 	 */
 	private function run_standard( $binary, $explicit_paths = true ): array {
 		// Explicit bin directory also proves that the custom filter is not an extensionless wildcard.
@@ -177,6 +184,8 @@ final class StandardsContractTest extends TestCase {
 		fclose( $pipes[0] );
 		$status = proc_close( $process );
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Read exact native file bytes for standalone configuration, immutable resource verification or isolated fixture evidence.
-		return array( $status, file_get_contents( $log ) );
+		$source_bytes = file_get_contents( $log );
+		$this->assertIsString( $source_bytes );
+		return array( $status, $source_bytes );
 	}
 }

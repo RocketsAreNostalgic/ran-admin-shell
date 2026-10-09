@@ -32,7 +32,7 @@ if ( ! function_exists( 'esc_url' ) ) {
 	 */
 	function esc_url( $value ) {
 		$value = filter_var( (string) $value, FILTER_SANITIZE_URL );
-		return esc_attr( $value );
+		return esc_attr( (string) $value );
 	}
 }
 

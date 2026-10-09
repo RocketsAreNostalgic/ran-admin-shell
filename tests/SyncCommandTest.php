@@ -127,6 +127,38 @@ final class SyncCommandTest extends TestCase {
 		$this->assertSame( "RAN Admin Shell requires registered CLI arguments (register_argc_argv).\n", file_get_contents( $log ) );
 	}
 
+	public function test_unhashable_canonical_resource_fails_the_real_check_without_changing_consumer_bytes(): void {
+		$config = $this->load_configuration();
+		SyncCommand::sync( $config );
+		$this->assertTrue( SyncCommand::check( $config ) );
+		$package = $this->root . '/package';
+		foreach ( array( 'bin', 'tools', 'resources/admin-shell.php' ) as $directory ) {
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_mkdir -- Create only the owned isolated package layout, including a deliberately unhashable resource directory.
+			mkdir( $package . '/' . $directory, 0777, true );
+		}
+		copy( dirname( __DIR__ ) . '/tools/SyncCommand.php', $package . '/tools/SyncCommand.php' );
+		copy( dirname( __DIR__ ) . '/bin/ran-admin-shell', $package . '/bin/ran-admin-shell' );
+		copy( dirname( __DIR__ ) . '/resources/admin-shell.css', $package . '/resources/admin-shell.css' );
+		$before = array();
+		foreach ( array( 'php', 'css', 'provenance' ) as $key ) {
+			$before[ $key ] = hash_file( 'sha256', $config[ $key ] );
+		}
+		$log = $this->root . '/hash-failure.log';
+		// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.system_calls_proc_open -- Run the exact CLI and synchronization implementation in the owned package mirror and observe its failure status.
+		$process = proc_open( array( PHP_BINARY, $package . '/bin/ran-admin-shell', 'check', '--config=' . $this->root . '/ran-admin-shell.json' ), array( array( 'pipe', 'r' ), array( 'file', $log, 'w' ), array( 'file', $log, 'a' ) ), $pipes );
+		$this->assertIsResource( $process );
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose -- Close the owned subprocess input pipe before observing process completion.
+		fclose( $pipes[0] );
+		$this->assertSame( 1, proc_close( $process ) );
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Read the owned process log after completion to verify real drift failure propagation.
+		$output = file_get_contents( $log );
+		$this->assertIsString( $output );
+		$this->assertStringContainsString( 'RAN Admin Shell resource drift detected.', $output );
+		foreach ( array( 'php', 'css', 'provenance' ) as $key ) {
+			$this->assertSame( $before[ $key ], hash_file( 'sha256', $config[ $key ] ) );
+		}
+	}
+
 	/** @return array{php:string,css:string,provenance:string,root:string} */
 	private function load_configuration() {
 		return SyncCommand::load_configuration( $this->root . '/ran-admin-shell.json' );
