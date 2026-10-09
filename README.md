@@ -105,6 +105,25 @@ successful fixes in the first.
 layout: incompatible CLI code must fail, an unrelated extensionless file stays
 excluded, and the adopted spacing rule proves the same CLI is fixed once and then remains byte-stable. Additional controls enforce naming/conditions at current and future tooling, test, preview and resource paths.
 
+### CSS quality
+
+Use Node 24.21.0 and pnpm 11.13.1. Install with
+`pnpm install --frozen-lockfile`, then run `pnpm check`. Stylelint recursively
+checks the authoritative CSS under `resources/`; Prettier uses the shared
+WordPress configuration on the same paths. Run `pnpm format` for formatting
+and `pnpm lint:css --fix` for supported Stylelint fixes.
+
+The shared configuration is pinned to an immutable reviewed candidate. Existing
+BEM element/modifier names retain a narrow class-name accommodation.
+`rule-empty-line-before` retains the upstream after-comment exception and also
+ignores the first nested rule: WordPress Prettier removes the blank line that
+WordPress Stylelint requests at the start of a media block. This local formatting
+accommodation keeps both tools stable; other blank-line checks and semantic CSS
+rules remain active. The configuration therefore includes these two documented
+local accommodations rather than claiming exact upstream parity. The
+PHP and frontend lanes both feed the required terminal Quality check.
+Node dependencies and configuration stay out of Composer exports.
+
 ### Static analysis
 
 `composer analyze` runs locked PHPStan at blocking level 5 with a PHP 8.0

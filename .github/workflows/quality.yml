@@ -2,6 +2,10 @@ name: Quality
 
 on:
   pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -15,13 +19,22 @@ jobs:
       php-extensions: zip
       node-version: ''
 
+  frontend:
+    uses: RocketsAreNostalgic/.github/.github/workflows/quality-node.yml@fce9bebde2f8d055990499edbc55b06bf01b25b8
+    with:
+      node-version-file: .node-version
+      pnpm-version: '11.13.1'
+
   quality:
     name: quality
     if: ${{ always() }}
-    needs: baseline
+    needs: [baseline, frontend]
     runs-on: ubuntu-latest
     steps:
-      - name: Require normalized PHP quality baseline
+      - name: Require PHP and frontend quality
         env:
           BASELINE_RESULT: ${{ needs.baseline.result }}
-        run: test "$BASELINE_RESULT" = success
+          FRONTEND_RESULT: ${{ needs.frontend.result }}
+        run: |
+          test "$BASELINE_RESULT" = success
+          test "$FRONTEND_RESULT" = success
