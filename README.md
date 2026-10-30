@@ -21,12 +21,19 @@ vendor/bin/ran-admin-shell check --config=ran-admin-shell.json --immutable
 The package and `vendor/` stay out of installed WordPress sites.
 
 For a full-width admin header, render the synchronized shell before the
-consumer's `.wrap`; keep notices, forms and page content inside `.wrap`.
+consumer's `.wrap`; keep owned page notices, forms and page content inside `.wrap`.
 The shell offsets WordPress's 20px desktop and 10px responsive `#wpcontent`
 start padding using a logical margin, while `overflow: clip` lets the native
 Screen Options and Help controls float over the background without narrowing
 the header surface. The consumer must keep `#screen-meta-links` above the shell
 in its exact-screen stylesheet.
+
+[Opt-in notice placement](docs/notice-placement.md) defines the full-page recipe:
+one native marker before the shell for global notices, explicit owned `.inline`
+notices below it, and feedback beside its form or row. Updating resources alone
+does not adopt this composition. [Full-page fixtures](fixtures/notice-placement.php)
+cover visible, empty, hidden, mixed and dismissed states separately from the
+optional-input renderer previews.
 
 ## Optional navigation scaffold
 

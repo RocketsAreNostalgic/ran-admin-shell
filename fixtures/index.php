@@ -24,6 +24,7 @@ $ran_admin_shell = $cases[ $case ];
 </head>
 <body>
 	<nav class="fixture-toolbar" aria-label="Fixture cases">
+		<a href="notice-placement.php">Full-page notice placement</a>
 		<?php foreach ( array_keys( $cases ) as $case_name ) : ?>
 			<a href="?case=<?php echo esc_attr( (string) $case_name ); ?>"><?php echo esc_html( (string) $case_name ); ?></a>
 		<?php endforeach; ?>
