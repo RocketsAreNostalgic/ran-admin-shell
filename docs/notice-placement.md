@@ -41,6 +41,9 @@ context and hides the marker; empty, HTML-hidden, CSS-hidden and removed notices
 therefore contribute no reserved spacing. It does not test visibility with
 `:not([hidden])`, which would still count CSS-hidden notices. The pre-destination
 selector uses `:has()`, supported by current WordPress-supported browsers.
+The destination and its global notices clear WordPress's floated Screen Options
+and Help controls before and after relocation. An empty destination adds no notice
+gap, though the native controls still need their own row above the shell.
 The existing direct-sibling notice/header rule remains for unadopted consumers;
 the destination breaks that adjacency deliberately. Consumers must retire any
 local broad sibling spacing override that duplicates this adopted spacing, while

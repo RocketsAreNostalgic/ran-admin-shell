@@ -20,6 +20,8 @@ final class NoticePlacementContractTest extends TestCase {
 			$document = new DOMDocument();
 			$this->assertTrue( $document->loadHTML( $html, LIBXML_NOERROR | LIBXML_NOWARNING ) );
 			$xpath = new DOMXPath( $document );
+			$this->assertSame( 1.0, $xpath->evaluate( 'count(//div[@id="screen-meta-links"]/div[@id="screen-options-link-wrap" and contains(@class,"screen-meta-toggle")]/button[@id="show-settings-link" and @aria-controls="screen-options-wrap"])' ), $case );
+			$this->assertSame( 1.0, $xpath->evaluate( 'count(//div[@id="screen-meta-links"]/div[@id="contextual-help-link-wrap" and contains(@class,"screen-meta-toggle")]/button[@id="contextual-help-link" and @aria-controls="contextual-help-wrap"])' ), $case );
 			$this->assertSame( 1.0, $xpath->evaluate( 'count(//hr[@class="wp-header-end"])' ), $case );
 			$this->assertSame( 1.0, $xpath->evaluate( 'count(//h1)' ), $case );
 			$this->assertSame( 1.0, $xpath->evaluate( 'count(//div[@class="ran-admin-shell-notices"]/following-sibling::header)' ), $case );

@@ -11,6 +11,7 @@ $has_owned       = in_array( $case, array( 'owned-only', 'combined', 'mixed' ), 
 $notice_class    = in_array( $case, array( 'updated', 'error' ), true ) ? $case : 'notice notice-warning';
 $ran_admin_shell = array(
 	'name'       => 'RAN Notice Placement',
+	'strapline'  => 'Manage settings and tools for your WordPress site.',
 	'navigation' => array(
 		array(
 			'label'   => 'Overview',
@@ -32,15 +33,22 @@ $ran_admin_shell = array(
 		.wrap { margin: 10px 20px 0 2px; }
 		.notice, div.updated, div.error { background: #fff; border-inline-start: 4px solid #dba617; margin: 5px 15px 2px; padding: 8px 12px; }
 		.wrap .notice { margin: 5px 0 15px; }
-		#screen-meta-links { position: absolute; inset-inline-end: 20px; z-index: 2; }
-		@media (max-width: 782px) { #wpcontent { padding-inline-start: 10px; } }
+		#screen-meta-links { float: right; margin: 0 20px 0 0; }
+		#screen-options-link-wrap, #contextual-help-link-wrap { float: left; margin: 0 0 0 6px; }
+		#screen-meta-links .screen-meta-toggle { position: relative; top: 0; }
+		#screen-meta-links .show-settings { border: 1px solid #c3c4c7; border-top: none; height: auto; margin-bottom: 0; padding: 0 6px 0 16px; background: #fff; border-radius: 0 0 4px 4px; color: #646970; }
+		#screen-meta-links .show-settings::after { content: "⌄"; display: inline-block; padding: 0 5px; line-height: 1.5; vertical-align: top; }
+		@media (max-width: 782px) { #wpcontent { padding-inline-start: 10px; } #screen-meta-links { margin-right: 10px; margin-bottom: 20px; } }
 	</style>
 	<?php // phpcs:ignore WordPress.WP.EnqueuedResources.NonEnqueuedStylesheet -- Standalone preview has no WordPress enqueue lifecycle; this fixed local stylesheet is its fixture resource. ?>
 	<link rel="stylesheet" href="../resources/admin-shell.css" />
 </head>
 <body>
 	<div id="wpcontent"><main id="wpbody-content">
-		<div id="screen-meta-links"><button type="button">Screen Options</button><button type="button">Help</button></div>
+		<div id="screen-meta-links">
+			<div id="screen-options-link-wrap" class="hide-if-no-js screen-meta-toggle"><button type="button" id="show-settings-link" class="button button-compact show-settings" aria-controls="screen-options-wrap" aria-expanded="false">Screen Options</button></div>
+			<div id="contextual-help-link-wrap" class="hide-if-no-js screen-meta-toggle"><button type="button" id="contextual-help-link" class="button button-compact show-settings" aria-controls="contextual-help-wrap" aria-expanded="false">Help</button></div>
+		</div>
 		<?php if ( $has_global ) : ?>
 			<div id="global-notice" class="<?php echo esc_attr( $notice_class ); ?>"><p>Unrelated global notice</p></div>
 		<?php endif; ?>
