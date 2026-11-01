@@ -2,6 +2,7 @@ name: Quality
 
 on:
   pull_request:
+    types: [opened, synchronize, reopened, edited]
   push:
     branches:
       - main
@@ -25,16 +26,39 @@ jobs:
       node-version-file: .node-version
       pnpm-version: '11.13.1'
 
+  release-classification:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
+        with:
+          node-version-file: .node-version
+      - name: Verify checkout identity
+        env:
+          RAN_EXPECTED_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: test "$(git rev-parse HEAD)" = "$RAN_EXPECTED_SHA"
+      - run: node --test tests/release-classification.test.cjs
+      - run: node tests/release-classification.cjs
+
   quality:
     name: quality
     if: ${{ always() }}
-    needs: [baseline, frontend]
+    needs: [baseline, frontend, release-classification]
     runs-on: ubuntu-latest
     steps:
-      - name: Require PHP and frontend quality
+      - name: Require PHP, frontend and release classification
         env:
           BASELINE_RESULT: ${{ needs.baseline.result }}
           FRONTEND_RESULT: ${{ needs.frontend.result }}
+          RELEASE_CLASSIFICATION_RESULT: ${{ needs.release-classification.result }}
         run: |
           test "$BASELINE_RESULT" = success
           test "$FRONTEND_RESULT" = success
+          test "$RELEASE_CLASSIFICATION_RESULT" = success
