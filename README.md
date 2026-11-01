@@ -186,3 +186,8 @@ does not claim installed WordPress or interactive UI acceptance.
 profile, exact retained exception groups, existing safety evidence and remaining
 qualification boundaries under organisation #65/#128. This does not update any
 consumer pin, publish the package or claim installed UI acceptance.
+
+### Releases
+
+See [release guide](https://github.com/RocketsAreNostalgic/ran-admin-shell/blob/main/RELEASING.md) for release automation, review and package
+acceptance. Each consumer separately verifies its lock and provenance changes.

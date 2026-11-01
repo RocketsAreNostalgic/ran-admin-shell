@@ -61,3 +61,8 @@ comments without executing source. Preserve resource PHP bytes and the reviewed
 CSS alignment/synchronization boundary, immutable reference checks, destination/link fences, atomic replacement, cleanup and consumer removal
 proofs. Read docs/quality-acceptance.md before widening these boundaries. No package
 publication or consumer lock/provenance update follows from profile acceptance.
+
+## Releases
+
+Before configuring or operating release automation, read [RELEASING.md](RELEASING.md)
+and the [shared organization release skill](https://github.com/RocketsAreNostalgic/.github/blob/main/.agents/skills/release-please/SKILL.md).
