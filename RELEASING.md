@@ -23,8 +23,10 @@ subsequent qualifying events; it does not itself grant release approval.
 
 Before merging a release pull request, independently review its exact base and
 head SHAs, resolve or disposition findings, and verify required checks for that
-same tuple. The proposed merge method is squash merge, subject to the strict
-Quality requirement without bypass. An owner must explicitly authorize merging
+same tuple. Use squash merge so the reviewed pull request title is the release-driving
+commit, subject to the strict Quality requirement without bypass. Quality
+checks the title against runtime Composer requirement and shipped resource/tool
+changes; reviewers must classify other release-significant changes. An owner must explicitly authorize merging
 that specific pull request. After merge, main Quality must succeed before the
 automation creates the tag and GitHub release; this is a separate decision from
 preparing or reviewing the pull request.

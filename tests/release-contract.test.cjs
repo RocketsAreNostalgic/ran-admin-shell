@@ -34,7 +34,21 @@ function checkWorkflows(release, quality) {
 		'release-please--branches--main--components--ran/admin-shell'
 	);
 	assert.equal(quality.name, 'Quality');
-	assert.ok(Object.hasOwn(quality.on, 'pull_request'));
+	assert.deepEqual(quality.on.pull_request.types, [
+		'opened',
+		'synchronize',
+		'reopened',
+		'edited',
+	]);
+	assert.ok(quality.jobs.quality.needs.includes('release-classification'));
+	assert.match(
+		quality.jobs.quality.steps[0].run,
+		/test "\$RELEASE_CLASSIFICATION_RESULT" = success/
+	);
+	assert.equal(
+		quality.jobs.quality.steps[0].env.RELEASE_CLASSIFICATION_RESULT,
+		'${{ needs.release-classification.result }}'
+	);
 	assert.deepEqual(quality.on.push.branches, ['main']);
 	assert.ok(Object.hasOwn(quality.on, 'workflow_dispatch'));
 	const inputs = quality.on.workflow_dispatch?.inputs ?? {};
@@ -97,6 +111,12 @@ test('Profile A qualifies main Quality and can dispatch candidate Quality', () =
 
 test('workflow contract rejects unsafe or mismatched fixtures', () => {
 	const cases = [
+		(r, q) => {
+			q.on.pull_request.types = ['opened'];
+		},
+		(r, q) => {
+			q.jobs.quality.needs = ['baseline', 'frontend'];
+		},
 		(r, q) => {
 			q.on.workflow_dispatch = { inputs: { token: { required: true } } };
 		},

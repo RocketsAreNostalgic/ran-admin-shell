@@ -7,7 +7,7 @@
 		"format:check": "prettier --check \"resources/**/*.css\"",
 		"format": "prettier --write \"resources/**/*.css\"",
 		"check": "pnpm lint:css && pnpm format:check && pnpm test:release",
-		"test:release": "node --test tests/release-contract.test.cjs"
+		"test:release": "node --test tests/release-contract.test.cjs tests/release-classification.test.cjs"
 	},
 	"devDependencies": {
 		"@rocketsarenostalgic/quality-config": "github:RocketsAreNostalgic/ran-quality-config#c7ca14dfadb6584ff3baa1884579f59b2b85c757",
