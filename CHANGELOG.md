@@ -1,5 +1,16 @@
 # Changelog
 
+## [2.0.0](https://github.com/RocketsAreNostalgic/ran-admin-shell/compare/v1.0.0...v2.0.0) (2026-11-03)
+
+
+### ⚠ BREAKING CHANGES
+
+* **admin-shell:** add compact sticky header and breadcrumbs ([#37](https://github.com/RocketsAreNostalgic/ran-admin-shell/issues/37))
+
+### Features
+
+* **admin-shell:** add compact sticky header and breadcrumbs ([#37](https://github.com/RocketsAreNostalgic/ran-admin-shell/issues/37)) ([d73dc59](https://github.com/RocketsAreNostalgic/ran-admin-shell/commit/d73dc59b1649254a34eb2dcee6b4859867b3cdc2))
+
 ## 1.0.0 (2026-11-01)
 
 
