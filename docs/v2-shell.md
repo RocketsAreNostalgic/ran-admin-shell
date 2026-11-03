@@ -96,8 +96,11 @@ exclusive DOM lifecycle. The shell does not introduce an unused React adapter.
 
 ## Sticky layout
 
-The default identity row has a 64px minimum height and a 32px logo. Navigation
-has 44px targets. Long content grows naturally, and long navigation scrolls
+The default identity row has a 64px minimum height and a 32px logo. Section
+navigation follows Jetpack AI's minimal treatment: a 48px row, regular 13px
+labels, 16px gaps and a 2px label-width current indicator. Identity and navigation
+use the same 24px horizontal inset. Breadcrumb links retain 44px targets.
+Long content grows naturally, and long navigation scrolls
 horizontally. The entire identity/navigation header sticks; no second header
 or cloned heading is created.
 
