@@ -70,6 +70,7 @@ body.admin-bar .ran-admin-shell {
 .ran-admin-shell__inner {
 	align-items: center;
 	display: flex;
+	flex-wrap: wrap;
 	gap: var(--wpds-dimension-gap-lg, 16px);
 	justify-content: space-between;
 	min-block-size: 64px;
@@ -227,7 +228,6 @@ body.admin-bar .ran-admin-shell {
 	}
 
 	.ran-admin-shell__inner {
-		flex-wrap: wrap;
 		padding-inline: 16px;
 	}
 
