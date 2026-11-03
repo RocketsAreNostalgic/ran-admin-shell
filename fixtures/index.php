@@ -22,13 +22,11 @@ $ran_admin_shell = $cases[ $case ];
 		.fixture-canvas { margin-inline-start: 160px; padding-inline: 20px; }
 		.fixture-sidebar { position: fixed; top: 32px; bottom: 0; width: 160px; background: #1d2327; color: #fff; }
 		.fixture-content { min-height: 180vh; background: #fff; padding: 20px; }
-		body.fixture-classic-scrollbar .ran-admin-shell__navigation::-webkit-scrollbar { height: 17px; }
-		body.fixture-classic-scrollbar .ran-admin-shell__navigation::-webkit-scrollbar-thumb { background: #50575e; }
 		@media (max-width: 782px) { body { padding-top: 46px; } .fixture-toolbar { height: 46px; } .fixture-sidebar { display: none; } .fixture-canvas { margin: 0; padding-inline: 10px; } }
 		@media (max-width: 600px) { .fixture-toolbar { position: absolute; } }
 	</style>
 </head>
-<body class="admin-bar<?php echo 'classic-scrollbar' === $case ? ' fixture-classic-scrollbar' : ''; ?>">
+<body class="admin-bar">
 	<nav class="fixture-toolbar" aria-label="Fixture cases">
 		<a href="notice-placement.php">Full-page notice placement</a>
 		<?php foreach ( array_keys( $cases ) as $case_name ) : ?>

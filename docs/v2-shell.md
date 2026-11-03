@@ -72,8 +72,10 @@ exclusive DOM lifecycle. The shell does not introduce an unused React adapter.
 ## Sticky layout
 
 The default identity row has a 64px minimum height and a 32px logo. Navigation
-has 44px targets. Long content grows naturally, and long navigation scrolls
-horizontally. The entire identity/navigation header sticks; no second header
+has 44px targets. Long content grows naturally. Navigation links wrap into
+additional rows, and long labels and breadcrumb trails wrap within the available
+width. No horizontal navigation scrollbar is used. The entire identity/navigation
+header sticks; no second header
 or cloned heading is created.
 
 With the WordPress `admin-bar` body class, the sticky offset is 32px on desktop
@@ -90,8 +92,8 @@ stacking level higher than the shell's level 10. The admin toolbar, menus and
 consumer overlays retain their own higher layers.
 
 Following content anchors and focused controls receive a default 192px scroll
-margin. This includes room for a classic horizontal scrollbar at the responsive
-46px toolbar breakpoint. For an unusually tall header, override
+margin on desktop and 320px at widths of 782px or less, allowing for a wrapped
+navigation stack and the responsive toolbar. For an unusually tall header, override
 `--ran-admin-shell-scroll-margin` on the containing content scope and
 verify focus and anchor destinations at the relevant viewport. This is a CSS
 allowance, not runtime measurement of an arbitrary header.

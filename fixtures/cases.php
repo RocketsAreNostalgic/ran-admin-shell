@@ -164,6 +164,4 @@ $cases = array(
 	),
 );
 
-$cases['classic-scrollbar'] = $cases['long-navigation'];
-
 return $cases;
