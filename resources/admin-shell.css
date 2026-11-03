@@ -1,12 +1,21 @@
+/* This unbuilt consumer stylesheet needs fallbacks when WordPress does not provide tokens. */
+/* stylelint-disable plugin-wpds/no-token-fallback-values */
 .ran-admin-shell {
-	background: linear-gradient(135deg, #17233b 0%, #243b67 100%);
+	background: var(--wpds-color-background-surface-neutral, #fff);
+	border-block-end: 1px solid
+		var(--wpds-color-stroke-surface-neutral, #c3c4c7);
 	box-sizing: border-box;
-	color: #fff;
+	color: var(--wpds-color-foreground-content-neutral, #1d2327);
 	isolation: isolate;
 	margin-block: 0 24px;
 	margin-inline-start: -20px;
-	overflow: clip;
-	position: relative;
+	position: sticky;
+	top: 0;
+	z-index: 10;
+}
+
+body.admin-bar .ran-admin-shell {
+	top: 32px;
 }
 
 #wpbody-content > .notice + .ran-admin-shell,
@@ -25,7 +34,6 @@
 	display: none;
 }
 
-/* Keep native horizontal margins before and after WordPress relocation. */
 #wpbody-content
 	> :is(div.notice, div.updated, div.error):has(~ .ran-admin-shell-notices),
 .ran-admin-shell-notices > :is(div.notice, div.updated, div.error) {
@@ -39,12 +47,20 @@
 	box-sizing: border-box;
 }
 
+/* Consumers with unusually tall headers can override this for anchor targets. */
+.ran-admin-shell ~ * :target,
+.ran-admin-shell ~ :target,
+.ran-admin-shell ~ * :focus,
+.ran-admin-shell ~ :focus {
+	scroll-margin-block-start: var(--ran-admin-shell-scroll-margin, 160px);
+}
+
 .ran-admin-shell__background {
 	block-size: 100%;
-	inset: 0;
 	inline-size: 100%;
+	inset: 0;
 	object-fit: cover;
-	opacity: 0.28;
+	opacity: 0.08;
 	position: absolute;
 	z-index: -1;
 }
@@ -52,16 +68,16 @@
 .ran-admin-shell__inner {
 	align-items: center;
 	display: flex;
-	gap: 24px;
+	gap: var(--wpds-dimension-gap-lg, 16px);
 	justify-content: space-between;
-	min-block-size: 116px;
-	padding: 24px 28px;
+	min-block-size: 64px;
+	padding: 10px var(--wpds-dimension-padding-lg, 24px);
 }
 
 .ran-admin-shell__identity {
 	align-items: center;
 	display: flex;
-	gap: 16px;
+	gap: 12px;
 	min-inline-size: 0;
 }
 
@@ -70,34 +86,19 @@
 }
 
 .ran-admin-shell__logo {
-	block-size: 56px;
+	block-size: 32px;
 	flex: 0 0 auto;
-	inline-size: 56px;
+	inline-size: 32px;
 	object-fit: contain;
-}
-
-.ran-admin-shell__navigation {
-	background: rgba(0, 0, 0, 0.2);
-	display: flex;
-	flex-wrap: wrap;
-	gap: 4px;
-	padding-inline: 20px;
-}
-
-.ran-admin-shell__navigation a {
-	border-block-end: 3px solid transparent;
-	color: #fff;
-	display: block;
-	padding: 13px 10px 10px;
-	text-decoration: none;
 }
 
 .ran-admin-shell__title {
 	color: inherit;
-	font-size: clamp(24px, 3vw, 34px);
-	font-weight: 600;
-	line-height: 1.15;
+	font-size: var(--wpds-typography-font-size-xl, 20px);
+	font-weight: var(--wpds-typography-font-weight-emphasis, 600);
+	line-height: 1.2;
 	margin: 0;
+	overflow-wrap: anywhere;
 }
 
 .ran-admin-shell__title a {
@@ -105,34 +106,25 @@
 	text-decoration: none;
 }
 
-.ran-admin-shell__title a:focus-visible,
-.ran-admin-shell__title a:hover {
-	color: inherit;
+.ran-admin-shell__title :where(a:hover) {
 	text-decoration: underline;
 	text-underline-offset: 0.18em;
 }
 
-.ran-admin-shell__navigation a[aria-current="page"],
-.ran-admin-shell__navigation a:focus-visible,
-.ran-admin-shell__navigation a:hover {
-	border-block-end-color: currentcolor;
-	color: #fff;
-}
-
 .ran-admin-shell__strapline {
-	color: rgba(255, 255, 255, 0.82);
-	font-size: 15px;
-	line-height: 1.45;
-	margin: 6px 0 0;
+	color: var(--wpds-color-foreground-content-neutral-weak, #50575e);
+	font-size: var(--wpds-typography-font-size-xs, 12px);
+	line-height: 1.35;
+	margin: 2px 0 0;
+	overflow-wrap: anywhere;
 }
 
 .ran-admin-shell__version {
-	background: rgba(255, 255, 255, 0.14);
-	border: 1px solid rgba(255, 255, 255, 0.28);
+	border: 1px solid var(--wpds-color-stroke-surface-neutral, #c3c4c7);
 	border-radius: 999px;
-	font-size: 12px;
+	font-size: var(--wpds-typography-font-size-xs, 12px);
 	line-height: 1;
-	padding: 6px 9px;
+	padding: 4px 8px;
 	white-space: nowrap;
 }
 
@@ -143,15 +135,72 @@
 	gap: 8px;
 }
 
-.ran-admin-shell .ran-admin-shell__actions .button {
-	background: #fff;
-	border-color: #fff;
-	color: #17233b;
-}
-
 .ran-admin-shell--name-only .ran-admin-shell__identity,
 .ran-admin-shell--name-only .ran-admin-shell__copy {
 	flex: 1 1 auto;
+}
+
+.ran-admin-shell__navigation {
+	display: flex;
+	overflow-x: auto;
+	padding-inline: 16px;
+}
+
+.ran-admin-shell__navigation > a,
+.ran-admin-shell__breadcrumb a,
+.ran-admin-shell__breadcrumb [aria-current="page"] {
+	align-items: center;
+	color: inherit;
+	display: inline-flex;
+	min-block-size: 44px;
+	padding: 8px 10px;
+	text-decoration: none;
+	white-space: nowrap;
+}
+
+.ran-admin-shell__navigation > a {
+	border-block-end: 3px solid transparent;
+}
+
+.ran-admin-shell__navigation > a[aria-current="page"] {
+	border-block-end-color: currentcolor;
+	font-weight: var(--wpds-typography-font-weight-emphasis, 600);
+}
+
+.ran-admin-shell__navigation a:hover {
+	background: var(
+		--wpds-color-background-interactive-neutral-weak-active,
+		#f0f0f1
+	);
+	text-decoration: underline;
+	text-underline-offset: 0.2em;
+}
+
+.ran-admin-shell a:focus-visible {
+	outline: 2px solid var(--wpds-color-stroke-focus, #3858e9);
+	outline-offset: -3px;
+}
+
+.ran-admin-shell__breadcrumbs {
+	align-items: center;
+	display: flex;
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.ran-admin-shell__breadcrumb {
+	align-items: center;
+	display: flex;
+	margin: 0;
+}
+
+.ran-admin-shell__breadcrumb [aria-current="page"] {
+	font-weight: var(--wpds-typography-font-weight-emphasis, 600);
+}
+
+.ran-admin-shell__separator {
+	color: var(--wpds-color-foreground-content-neutral-weak, #50575e);
 }
 
 @media (max-width: 782px) {
@@ -159,53 +208,51 @@
 		margin-inline-start: -10px;
 	}
 
+	body.admin-bar .ran-admin-shell {
+		top: 46px;
+	}
+
 	body:not(.rtl) #wpwrap.wp-responsive-open #wpbody .ran-admin-shell {
 		margin-inline-start: calc(180px - 16em);
 	}
 
 	.ran-admin-shell__inner {
-		align-items: flex-start;
-		flex-direction: column;
-		gap: 16px;
-		padding: 20px;
-	}
-
-	.ran-admin-shell__actions {
-		inline-size: 100%;
+		flex-wrap: wrap;
+		padding-inline: 16px;
 	}
 
 	.ran-admin-shell__navigation {
-		padding-inline: 10px;
+		padding-inline: 6px;
 	}
 }
 
-@media (max-width: 480px) {
-	.ran-admin-shell__identity {
-		align-items: flex-start;
+@media (max-width: 600px) {
+	body.admin-bar .ran-admin-shell {
+		top: 0;
+	}
+}
+
+@media (max-height: 400px) {
+	.ran-admin-shell {
+		position: relative;
+		top: 0;
 	}
 
-	.ran-admin-shell__logo {
-		block-size: 44px;
-		inline-size: 44px;
+	body.admin-bar .ran-admin-shell {
+		top: 0;
 	}
 }
 
 @media (forced-colors: active) {
 	.ran-admin-shell {
-		border: 1px solid CanvasText;
-		forced-color-adjust: auto;
+		border-block-end: 1px solid CanvasText;
 	}
 
 	.ran-admin-shell__background {
 		display: none;
 	}
-}
 
-@media (prefers-reduced-motion: reduce) {
-	.ran-admin-shell *,
-	.ran-admin-shell *::before,
-	.ran-admin-shell *::after {
-		scroll-behavior: auto;
-		transition-duration: 0.01ms !important;
+	.ran-admin-shell a:focus-visible {
+		outline-color: Highlight;
 	}
 }
