@@ -53,13 +53,13 @@
 	--ran-admin-shell-text: #f6f7f7;
 	--ran-admin-shell-muted: #c3c4c7;
 	--ran-admin-shell-stroke: #73849e;
-	--ran-admin-shell-nav-divider: #73849e;
 	--ran-admin-shell-nav-indicator: #c3c4c7;
 	--ran-admin-shell-hover: #243b67;
 	--ran-admin-shell-focus: #8cafff;
 	--ran-admin-shell-action-text: #f6f7f7;
 	--ran-admin-shell-action-stroke: #73849e;
 
+	border-block-end: 0;
 	color-scheme: dark;
 }
 
