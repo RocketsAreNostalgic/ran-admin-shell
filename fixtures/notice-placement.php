@@ -30,7 +30,7 @@ $ran_admin_shell = array(
 		/* Simplified native styles; consumer acceptance must use real WordPress. */
 		body { background: #f0f0f1; color: #1d2327; font: 14px/1.4 sans-serif; margin: 0; }
 		#wpcontent { padding-inline-start: 20px; }
-		.wrap { margin: 10px 20px 0 2px; }
+		.wrap { margin: 10px 20px 0 2px; min-height: 180vh; }
 		.notice, div.updated, div.error { background: #fff; border-inline-start: 4px solid #dba617; margin: 5px 15px 2px; padding: 8px 12px; }
 		.wrap .notice { margin: 5px 0 15px; }
 		#screen-meta-links { float: right; margin: 0 20px 0 0; }
@@ -44,6 +44,7 @@ $ran_admin_shell = array(
 	<link rel="stylesheet" href="../resources/admin-shell.css" />
 </head>
 <body>
+	<p>Standalone preview, not installed WordPress proof.</p>
 	<div id="wpcontent"><main id="wpbody-content">
 		<div id="screen-meta-links">
 			<div id="screen-options-link-wrap" class="hide-if-no-js screen-meta-toggle"><button type="button" id="show-settings-link" class="button button-compact show-settings" aria-controls="screen-options-wrap" aria-expanded="false">Screen Options</button></div>

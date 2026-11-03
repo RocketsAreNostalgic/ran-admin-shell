@@ -19,6 +19,52 @@ final class RenderContractTest extends TestCase {
 		$this->assertStringNotContainsString( '__version', $html );
 	}
 
+	/** Only the exact inverse option changes the default shell. */
+	public function test_color_scheme_requires_exact_inverse(): void {
+		$default = $this->render( array( 'name' => 'Example' ) );
+		foreach ( array( 'light', '', ' ', 'unknown', 'Inverse', ' inverse ', null, false, 1, array(), new stdClass(), 'inverse" onclick="alert(1)' ) as $value ) {
+			$this->assertSame(
+				$default,
+				$this->render(
+					array(
+						'name'         => 'Example',
+						'color_scheme' => $value,
+					)
+				)
+			);
+		}
+		$inverse = $this->render(
+			array(
+				'name'         => 'Example',
+				'color_scheme' => 'inverse',
+			)
+		);
+		$this->assertStringContainsString( 'ran-admin-shell--name-only ran-admin-shell--inverse', $inverse );
+		$this->assertSame( str_replace( ' ran-admin-shell--inverse', '', $inverse ), $default );
+	}
+
+	/** Inverse preserves navigation and breadcrumb rendering. */
+	public function test_inverse_color_scheme_with_navigation_and_breadcrumbs(): void {
+		$args = array(
+			'name'         => 'Example',
+			'color_scheme' => 'inverse',
+			'navigation'   => array(
+				array(
+					'label' => 'Section',
+					'url'   => '/section',
+				),
+			),
+		);
+		$html = $this->render( $args );
+		$this->assertStringContainsString( 'ran-admin-shell--inverse', $html );
+		$this->assertStringContainsString( 'href="/section"', $html );
+		$args['breadcrumbs'] = array( array( 'label' => 'Current' ) );
+		$html                = $this->render( $args );
+		$this->assertStringContainsString( 'ran-admin-shell--inverse', $html );
+		$this->assertStringContainsString( '<span aria-current="page">Current</span>', $html );
+		$this->assertStringNotContainsString( 'href="/section"', $html );
+	}
+
 	/** Optional values appear independently and unsafe copy is escaped. */
 	public function test_passive_options_render_and_escape(): void {
 		$html = $this->render(
@@ -97,6 +143,157 @@ final class RenderContractTest extends TestCase {
 	/** A missing required name renders nothing. */
 	public function test_missing_name_renders_nothing(): void {
 		$this->assertSame( '', $this->render( array( 'strapline' => 'No product' ) ) );
+	}
+
+	/** Breadcrumbs take precedence and the last item is always current text. */
+	public function test_breadcrumbs_render_a_single_accessible_navigation_region(): void {
+		$html            = $this->render(
+			array(
+				'name'              => 'Example',
+				'breadcrumbs_label' => 'Where "now"',
+				'breadcrumbs'       => array(
+					array(
+						'label'   => 'Parent <one>',
+						'url'     => '/parent?one=1&two=2',
+						'current' => true,
+					),
+					array(
+						'label'   => 'Leaf & detail',
+						'url'     => '/ignored',
+						'current' => false,
+					),
+				),
+				'navigation'        => array(
+					array(
+						'label' => 'Hidden destination',
+						'url'   => '/hidden',
+					),
+				),
+			)
+		);
+		$document        = new DOMDocument();
+		$previous_errors = libxml_use_internal_errors( true );
+		try {
+			$loaded = $document->loadHTML( '<!doctype html><html><body>' . $html . '</body></html>' );
+		} finally {
+			libxml_clear_errors();
+			libxml_use_internal_errors( $previous_errors );
+		}
+		$this->assertTrue( $loaded );
+		$xpath = new DOMXPath( $document );
+		$this->assertSame( 1.0, $xpath->evaluate( 'count(//h1)' ) );
+		$this->assertSame( 1.0, $xpath->evaluate( 'count(//nav)' ) );
+		$this->assertSame( 'Where "now"', $xpath->evaluate( 'string(//nav/@aria-label)' ) );
+		$this->assertSame( 2.0, $xpath->evaluate( 'count(//nav/ol/li)' ) );
+		$this->assertSame( 'Parent <one>', $xpath->evaluate( 'string(//nav/ol/li[1]/a)' ) );
+		$this->assertSame( '/parent?one=1&two=2', $xpath->evaluate( 'string(//nav/ol/li[1]/a/@href)' ) );
+		$this->assertSame( 'Leaf & detail', $xpath->evaluate( 'string(//*[@aria-current="page"])' ) );
+		$this->assertSame( 1.0, $xpath->evaluate( 'count(//*[@aria-current="page"])' ) );
+		$this->assertSame( 0.0, $xpath->evaluate( 'count(//nav/ol/li[2]/a)' ) );
+		$this->assertSame( 1.0, $xpath->evaluate( 'count(//span[@class="ran-admin-shell__separator" and @aria-hidden="true"])' ) );
+		$this->assertStringNotContainsString( 'Hidden destination', $html );
+		$this->assertStringNotContainsString( '/ignored', $html );
+	}
+
+	public function test_single_breadcrumb_needs_no_url_and_uses_default_label(): void {
+		$html = $this->render(
+			array(
+				'name'              => 'Example',
+				'breadcrumbs_label' => ' ',
+				'breadcrumbs'       => array( array( 'label' => 'Current' ) ),
+			)
+		);
+		$this->assertStringContainsString( 'aria-label="Breadcrumbs"', $html );
+		$this->assertStringContainsString( '<span aria-current="page">Current</span>', $html );
+		$this->assertStringNotContainsString( '__separator', $html );
+	}
+
+	/** Any invalid member removes the whole trail and retains valid section navigation. */
+	public function test_invalid_breadcrumbs_fall_back_to_navigation(): void {
+		$invalid = array(
+			null,
+			'trail',
+			array(),
+			array( null ),
+			array( array( 'label' => '' ) ),
+			array( array( 'label' => array() ) ),
+			array( array( 'label' => 'Parent' ), array( 'label' => 'Leaf' ) ),
+			array(
+				array(
+					'label' => 'Parent',
+					'url'   => ' ',
+				),
+				array( 'label' => 'Leaf' ),
+			),
+			array(
+				array(
+					'label' => 'Parent',
+					'url'   => array(),
+				),
+				array( 'label' => 'Leaf' ),
+			),
+			array(
+				array(
+					'label' => 'Parent',
+					'url'   => '/parent',
+				),
+				null,
+			),
+		);
+		foreach ( $invalid as $trail ) {
+			$html = $this->render(
+				array(
+					'name'             => 'Example',
+					'breadcrumbs'      => $trail,
+					'navigation_label' => ' ',
+					'navigation'       => array(
+						array(
+							'label'   => 'Section',
+							'url'     => '/section',
+							'current' => true,
+						),
+					),
+				)
+			);
+			$this->assertStringNotContainsString( '__breadcrumbs', $html );
+			$this->assertStringContainsString( 'aria-label="Plugin sections"', $html );
+			$this->assertSame( 1, substr_count( $html, 'aria-current="page"' ) );
+		}
+		$html = $this->render(
+			array(
+				'name'        => 'Example',
+				'breadcrumbs' => array( null ),
+			)
+		);
+		$this->assertStringNotContainsString( '<nav', $html );
+	}
+
+	/** Blocked ancestor URLs invalidate the trail with or without fallback navigation. */
+	public function test_blocked_breadcrumb_urls_fall_back(): void {
+		foreach ( array( 'javascript:alert(1)', 'data:text/html,test' ) as $url ) {
+			$args = array(
+				'name'        => 'Example',
+				'breadcrumbs' => array(
+					array(
+						'label' => 'Parent',
+						'url'   => $url,
+					),
+					array( 'label' => 'Leaf' ),
+				),
+			);
+			$html = $this->render( $args );
+			$this->assertStringNotContainsString( '<nav', $html );
+			$args['navigation'] = array(
+				array(
+					'label' => 'Section',
+					'url'   => '/section',
+				),
+			);
+			$html               = $this->render( $args );
+			$this->assertStringNotContainsString( '__breadcrumbs', $html );
+			$this->assertStringContainsString( 'href="/section"', $html );
+			$this->assertStringNotContainsString( 'href=""', $html );
+		}
 	}
 
 	public function test_preview_keeps_quality_annotations_out_of_html(): void {
