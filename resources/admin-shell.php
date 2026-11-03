@@ -88,7 +88,7 @@ $ran_admin_shell_actions        = array_values(
 	)
 );
 ?>
-<header class="ran-admin-shell<?php echo '' === $ran_admin_shell_strapline ? ' ran-admin-shell--name-only' : ''; ?>">
+<header class="ran-admin-shell<?php echo '' === $ran_admin_shell_strapline ? ' ran-admin-shell--name-only' : ''; ?><?php echo isset( $ran_admin_shell['color_scheme'] ) && 'inverse' === $ran_admin_shell['color_scheme'] ? ' ran-admin-shell--inverse' : ''; ?>">
 	<?php if ( $ran_admin_shell_has_background ) : ?>
 		<img class="ran-admin-shell__background" src="<?php echo esc_url( (string) $ran_admin_shell_background['url'] ); ?>" width="<?php echo esc_attr( (string) (int) $ran_admin_shell_background['width'] ); ?>" height="<?php echo esc_attr( (string) (int) $ran_admin_shell_background['height'] ); ?>" alt="" aria-hidden="true" />
 	<?php endif; ?>

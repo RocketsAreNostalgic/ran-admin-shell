@@ -46,6 +46,31 @@ navigation. Empty or invalid breadcrumbs fall back to valid `navigation`;
 without either, the navigation region is absent. The consumer supplies
 translated labels, authorized destinations and accurate hierarchy.
 
+## Colour schemes
+
+`color_scheme` accepts `light` or `inverse`. Light is the default; missing,
+blank, unrecognised and non-string values retain the light presentation.
+
+```php
+$ran_admin_shell['color_scheme'] = 'inverse';
+```
+
+Light retains the WordPress design-system colour tokens and their light
+fallbacks. Inverse supplies a shell-scoped navy surface with light foregrounds,
+borders, hover states and focus indicators. It does not change the rest of the
+WordPress dashboard or redefine public WordPress tokens. Typography, spacing,
+navigation behaviour and optional-input structure remain the same in both.
+
+The consumer supplies the appropriate `logo` asset for its chosen scheme.
+Images are not automatically colour-inverted. The preview uses matching dark
+and light fixture logos. Forced-colours mode uses system colours in either
+scheme.
+
+The preview's **Light** and **Inverse** links preserve the selected example.
+For example, compare `/fixtures/?case=booster-sections&color_scheme=light` and
+`/fixtures/?case=booster-sections&color_scheme=inverse`. These read-only preview
+links do not store a plugin or WordPress preference.
+
 ## Tokens and WordPress UI
 
 The stylesheet consumes public `--wpds-*` surface, foreground, stroke, spacing,
@@ -120,7 +145,8 @@ dependency excluded from plugin archives.
 ## Preview and verification
 
 Run `php -S 127.0.0.1:18736` from the repository and open
-`/fixtures/?case=booster-sections` or `/fixtures/?case=breadcrumbs`.
+`/fixtures/?case=booster-sections` or `/fixtures/?case=breadcrumbs`, then use
+the Light/Inverse links to compare the same example in both schemes.
 The fixtures cover name-only, missing/invalid options, long labels, RTL and
 notice composition. They are standalone previews, not an installed WordPress
 acceptance claim.

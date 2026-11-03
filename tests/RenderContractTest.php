@@ -19,6 +19,52 @@ final class RenderContractTest extends TestCase {
 		$this->assertStringNotContainsString( '__version', $html );
 	}
 
+	/** Only the exact inverse option changes the default shell. */
+	public function test_color_scheme_requires_exact_inverse(): void {
+		$default = $this->render( array( 'name' => 'Example' ) );
+		foreach ( array( 'light', '', ' ', 'unknown', 'Inverse', ' inverse ', null, false, 1, array(), new stdClass(), 'inverse" onclick="alert(1)' ) as $value ) {
+			$this->assertSame(
+				$default,
+				$this->render(
+					array(
+						'name'         => 'Example',
+						'color_scheme' => $value,
+					)
+				)
+			);
+		}
+		$inverse = $this->render(
+			array(
+				'name'         => 'Example',
+				'color_scheme' => 'inverse',
+			)
+		);
+		$this->assertStringContainsString( 'ran-admin-shell--name-only ran-admin-shell--inverse', $inverse );
+		$this->assertSame( str_replace( ' ran-admin-shell--inverse', '', $inverse ), $default );
+	}
+
+	/** Inverse preserves navigation and breadcrumb rendering. */
+	public function test_inverse_color_scheme_with_navigation_and_breadcrumbs(): void {
+		$args = array(
+			'name'         => 'Example',
+			'color_scheme' => 'inverse',
+			'navigation'   => array(
+				array(
+					'label' => 'Section',
+					'url'   => '/section',
+				),
+			),
+		);
+		$html = $this->render( $args );
+		$this->assertStringContainsString( 'ran-admin-shell--inverse', $html );
+		$this->assertStringContainsString( 'href="/section"', $html );
+		$args['breadcrumbs'] = array( array( 'label' => 'Current' ) );
+		$html                = $this->render( $args );
+		$this->assertStringContainsString( 'ran-admin-shell--inverse', $html );
+		$this->assertStringContainsString( '<span aria-current="page">Current</span>', $html );
+		$this->assertStringNotContainsString( 'href="/section"', $html );
+	}
+
 	/** Optional values appear independently and unsafe copy is escaped. */
 	public function test_passive_options_render_and_escape(): void {
 		$html = $this->render(

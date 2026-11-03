@@ -11,6 +11,10 @@ Only a non-empty `name` is required. `home_url`, `strapline`, `logo`,
 Blank or invalid optional values emit no feature markup and reserve no layout
 space. Native contextual Help is consumer-owned.
 
+The optional `color_scheme` selects `light` (the default) or `inverse` for the
+shell. See [colour schemes and preview links](docs/v2-shell.md#colour-schemes)
+for the input contract and consumer-owned logo selection.
+
 Consumers install this as a development dependency, create
 `ran-admin-shell.json`, then explicitly synchronize and verify committed
 runtime files:

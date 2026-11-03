@@ -1,17 +1,56 @@
 /* This unbuilt consumer stylesheet needs fallbacks when WordPress does not provide tokens. */
 /* stylelint-disable plugin-wpds/no-token-fallback-values */
 .ran-admin-shell {
-	background: var(--wpds-color-background-surface-neutral, #fff);
-	border-block-end: 1px solid
-		var(--wpds-color-stroke-surface-neutral, #c3c4c7);
+	--ran-admin-shell-surface: var(
+		--wpds-color-background-surface-neutral,
+		#fff
+	);
+	--ran-admin-shell-text: var(
+		--wpds-color-foreground-content-neutral,
+		#1d2327
+	);
+	--ran-admin-shell-muted: var(
+		--wpds-color-foreground-content-neutral-weak,
+		#50575e
+	);
+	--ran-admin-shell-stroke: var(--wpds-color-stroke-surface-neutral, #c3c4c7);
+	--ran-admin-shell-hover: var(
+		--wpds-color-background-interactive-neutral-weak-active,
+		#f0f0f1
+	);
+	--ran-admin-shell-focus: var(--wpds-color-stroke-focus, #3858e9);
+	--ran-admin-shell-action-text: var(
+		--wpds-color-foreground-interactive-brand,
+		#2271b1
+	);
+	--ran-admin-shell-action-stroke: var(
+		--wpds-color-stroke-interactive-brand,
+		#2271b1
+	);
+
+	background: var(--ran-admin-shell-surface);
+	border-block-end: 1px solid var(--ran-admin-shell-stroke);
 	box-sizing: border-box;
-	color: var(--wpds-color-foreground-content-neutral, #1d2327);
+	color: var(--ran-admin-shell-text);
 	isolation: isolate;
 	margin-block: 0 24px;
 	margin-inline-start: -20px;
 	position: sticky;
 	top: 0;
 	z-index: 10;
+}
+
+.ran-admin-shell--inverse {
+	--ran-admin-shell-surface: #17233b;
+	--ran-admin-shell-text: #f6f7f7;
+	--ran-admin-shell-muted: #c3c4c7;
+	--ran-admin-shell-stroke: #73849e;
+	--ran-admin-shell-hover: #243b67;
+	--ran-admin-shell-focus: #8cafff;
+	--ran-admin-shell-action-text: #f6f7f7;
+	--ran-admin-shell-action-stroke: #73849e;
+
+	color-scheme: dark;
 }
 
 body.admin-bar .ran-admin-shell {
@@ -115,7 +154,7 @@ body.admin-bar .ran-admin-shell {
 }
 
 .ran-admin-shell__strapline {
-	color: var(--wpds-color-foreground-content-neutral-weak, #50575e);
+	color: var(--ran-admin-shell-muted);
 	font-size: var(--wpds-typography-font-size-xs, 12px);
 	line-height: 1.35;
 	margin: 2px 0 0;
@@ -123,7 +162,7 @@ body.admin-bar .ran-admin-shell {
 }
 
 .ran-admin-shell__version {
-	border: 1px solid var(--wpds-color-stroke-surface-neutral, #c3c4c7);
+	border: 1px solid var(--ran-admin-shell-stroke);
 	border-radius: 999px;
 	font-size: var(--wpds-typography-font-size-xs, 12px);
 	line-height: 1;
@@ -140,10 +179,26 @@ body.admin-bar .ran-admin-shell {
 	min-inline-size: 0;
 }
 
-.ran-admin-shell__actions > a {
+.ran-admin-shell__actions > a.button,
+.ran-admin-shell__actions > a.button:visited {
+	background: var(--ran-admin-shell-surface);
+	border: 1px solid var(--ran-admin-shell-action-stroke);
+	border-radius: 3px;
+	color: var(--ran-admin-shell-action-text);
+	display: inline-block;
+	line-height: 2.15384615;
 	max-inline-size: 100%;
 	overflow-wrap: anywhere;
+	padding: 0 10px;
+	text-decoration: none;
 	white-space: normal;
+}
+
+.ran-admin-shell__actions > a.button:hover,
+.ran-admin-shell__actions > a.button:active {
+	background: var(--ran-admin-shell-hover);
+	border-color: var(--ran-admin-shell-action-stroke);
+	color: var(--ran-admin-shell-action-text);
 }
 
 .ran-admin-shell--name-only .ran-admin-shell__identity,
@@ -179,17 +234,20 @@ body.admin-bar .ran-admin-shell {
 }
 
 .ran-admin-shell__navigation a:hover {
-	background: var(
-		--wpds-color-background-interactive-neutral-weak-active,
-		#f0f0f1
-	);
+	background: var(--ran-admin-shell-hover);
 	text-decoration: underline;
 	text-underline-offset: 0.2em;
 }
 
-.ran-admin-shell a:focus-visible {
-	outline: 2px solid var(--wpds-color-stroke-focus, #3858e9);
+.ran-admin-shell a:focus-visible,
+.ran-admin-shell__actions > a.button:focus-visible {
+	box-shadow: none;
+	outline: 2px solid var(--ran-admin-shell-focus);
 	outline-offset: -3px;
+}
+
+.ran-admin-shell__actions > a.button:focus-visible {
+	border-color: var(--ran-admin-shell-focus);
 }
 
 .ran-admin-shell__breadcrumbs {
@@ -211,7 +269,7 @@ body.admin-bar .ran-admin-shell {
 }
 
 .ran-admin-shell__separator {
-	color: var(--wpds-color-foreground-content-neutral-weak, #50575e);
+	color: var(--ran-admin-shell-muted);
 }
 
 @media (max-width: 782px) {
@@ -255,14 +313,30 @@ body.admin-bar .ran-admin-shell {
 
 @media (forced-colors: active) {
 	.ran-admin-shell {
+		--ran-admin-shell-surface: Canvas;
+		--ran-admin-shell-text: CanvasText;
+		--ran-admin-shell-muted: CanvasText;
+		--ran-admin-shell-stroke: CanvasText;
+		--ran-admin-shell-hover: Highlight;
+		--ran-admin-shell-focus: Highlight;
+		--ran-admin-shell-action-text: ButtonText;
+		--ran-admin-shell-action-stroke: ButtonText;
 		border-block-end: 1px solid CanvasText;
+		color-scheme: normal;
 	}
 
 	.ran-admin-shell__background {
 		display: none;
 	}
 
-	.ran-admin-shell a:focus-visible {
-		outline-color: Highlight;
+	.ran-admin-shell__actions > a.button,
+	.ran-admin-shell__actions > a.button:visited {
+		background: ButtonFace;
+	}
+
+	.ran-admin-shell__navigation a:hover,
+	.ran-admin-shell__actions > a.button:hover {
+		background: Highlight;
+		color: HighlightText;
 	}
 }
