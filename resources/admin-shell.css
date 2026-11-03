@@ -47,7 +47,7 @@ body.admin-bar .ran-admin-shell {
 	box-sizing: border-box;
 }
 
-/* Allow for the admin bar and shell; narrow layouts allow more navigation rows.
+/* Allow for the mobile admin bar, shell and a classic horizontal scrollbar.
  * Consumers with unusually tall headers can override this for anchor targets.
  */
 .ran-admin-shell ~ * :target,
@@ -153,7 +153,7 @@ body.admin-bar .ran-admin-shell {
 
 .ran-admin-shell__navigation {
 	display: flex;
-	flex-wrap: wrap;
+	overflow-x: auto;
 	padding-inline: 16px;
 }
 
@@ -163,13 +163,10 @@ body.admin-bar .ran-admin-shell {
 	align-items: center;
 	color: inherit;
 	display: inline-flex;
-	max-inline-size: 100%;
 	min-block-size: 44px;
-	min-inline-size: 0;
-	overflow-wrap: anywhere;
 	padding: 8px 10px;
 	text-decoration: none;
-	white-space: normal;
+	white-space: nowrap;
 }
 
 .ran-admin-shell__navigation > a {
@@ -198,7 +195,6 @@ body.admin-bar .ran-admin-shell {
 .ran-admin-shell__breadcrumbs {
 	align-items: center;
 	display: flex;
-	flex-wrap: wrap;
 	list-style: none;
 	margin: 0;
 	padding: 0;
@@ -208,8 +204,6 @@ body.admin-bar .ran-admin-shell {
 	align-items: center;
 	display: flex;
 	margin: 0;
-	max-inline-size: 100%;
-	min-inline-size: 0;
 }
 
 .ran-admin-shell__breadcrumb [aria-current="page"] {
@@ -221,13 +215,6 @@ body.admin-bar .ran-admin-shell {
 }
 
 @media (max-width: 782px) {
-	.ran-admin-shell ~ * :target,
-	.ran-admin-shell ~ :target,
-	.ran-admin-shell ~ * :focus,
-	.ran-admin-shell ~ :focus {
-		scroll-margin-block-start: var(--ran-admin-shell-scroll-margin, 320px);
-	}
-
 	.ran-admin-shell {
 		margin-inline-start: -10px;
 	}
