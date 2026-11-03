@@ -38,7 +38,8 @@ $ran_admin_shell['breadcrumbs'] = array(
 ```
 
 Every item needs a nonblank scalar label. Every ancestor needs a nonblank
-scalar URL. The final item is the current location, rendered as text with
+scalar URL that remains nonempty after WordPress URL escaping. The final item
+is the current location, rendered as text with
 `aria-current="page"`; its URL and any `current` flags are ignored. Invalid
 members invalidate the whole trail. A valid trail takes precedence over peer
 navigation. Empty or invalid breadcrumbs fall back to valid `navigation`;
@@ -88,9 +89,10 @@ Help/Screen Options stay above the shell; keep their existing positioned
 stacking level higher than the shell's level 10. The admin toolbar, menus and
 consumer overlays retain their own higher layers.
 
-Following content anchors and focused controls receive a default 160px scroll
-margin. For a translated or customized header taller than that allowance,
-override `--ran-admin-shell-scroll-margin` on the containing content scope and
+Following content anchors and focused controls receive a default 192px scroll
+margin. This includes room for a classic horizontal scrollbar at the responsive
+46px toolbar breakpoint. For an unusually tall header, override
+`--ran-admin-shell-scroll-margin` on the containing content scope and
 verify focus and anchor destinations at the relevant viewport. This is a CSS
 allowance, not runtime measurement of an arbitrary header.
 

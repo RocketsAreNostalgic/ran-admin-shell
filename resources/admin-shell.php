@@ -39,7 +39,7 @@ foreach ( $ran_admin_shell_breadcrumbs as $ran_admin_shell_index => $ran_admin_s
 		|| ! is_scalar( $ran_admin_shell_breadcrumb['label'] )
 		|| '' === trim( (string) $ran_admin_shell_breadcrumb['label'] )
 		|| ( $ran_admin_shell_index !== $ran_admin_shell_breadcrumb_last
-			&& ( ! isset( $ran_admin_shell_breadcrumb['url'] ) || ! is_scalar( $ran_admin_shell_breadcrumb['url'] ) || '' === trim( (string) $ran_admin_shell_breadcrumb['url'] ) ) )
+			&& ( ! isset( $ran_admin_shell_breadcrumb['url'] ) || ! is_scalar( $ran_admin_shell_breadcrumb['url'] ) || '' === trim( (string) $ran_admin_shell_breadcrumb['url'] ) || '' === esc_url( (string) $ran_admin_shell_breadcrumb['url'] ) ) )
 	) {
 		$ran_admin_shell_breadcrumbs = array();
 		break;

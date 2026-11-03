@@ -1,9 +1,9 @@
 <?php
 /** Development fixture cases. */
 
-$logo = 'data:image/svg+xml,' . rawurlencode( '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><path fill="#2c3338" d="M10 3h12l-2 13 5 8H7l5-8z"/><path fill="#3858e9" d="M11 26h10l-5 5z"/></svg>' );
+$logo = '/fixtures/nozzle.svg';
 
-return array(
+$cases = array(
 	'booster-sections'    => array(
 		'name'       => 'Booster',
 		'strapline'  => 'Rockets Are Nostalgic',
@@ -107,6 +107,27 @@ return array(
 			),
 		),
 	),
+	'many-actions'        => array(
+		'name'    => 'RAN Example Plugin',
+		'actions' => array(
+			array(
+				'label' => 'Documentation',
+				'url'   => '#',
+			),
+			array(
+				'label' => 'Support',
+				'url'   => '#',
+			),
+			array(
+				'label' => 'Settings',
+				'url'   => '#',
+			),
+			array(
+				'label' => 'An extraordinarily long action label that must wrap within the viewport',
+				'url'   => '#',
+			),
+		),
+	),
 	'blank-optionals'     => array(
 		'name'       => 'RAN Heading Only',
 		'strapline'  => '',
@@ -142,3 +163,7 @@ return array(
 		),
 	),
 );
+
+$cases['classic-scrollbar'] = $cases['long-navigation'];
+
+return $cases;

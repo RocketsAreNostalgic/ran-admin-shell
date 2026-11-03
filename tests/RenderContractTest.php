@@ -222,6 +222,34 @@ final class RenderContractTest extends TestCase {
 		$this->assertStringNotContainsString( '<nav', $html );
 	}
 
+	/** Blocked ancestor URLs invalidate the trail with or without fallback navigation. */
+	public function test_blocked_breadcrumb_urls_fall_back(): void {
+		foreach ( array( 'javascript:alert(1)', 'data:text/html,test' ) as $url ) {
+			$args = array(
+				'name'        => 'Example',
+				'breadcrumbs' => array(
+					array(
+						'label' => 'Parent',
+						'url'   => $url,
+					),
+					array( 'label' => 'Leaf' ),
+				),
+			);
+			$html = $this->render( $args );
+			$this->assertStringNotContainsString( '<nav', $html );
+			$args['navigation'] = array(
+				array(
+					'label' => 'Section',
+					'url'   => '/section',
+				),
+			);
+			$html               = $this->render( $args );
+			$this->assertStringNotContainsString( '__breadcrumbs', $html );
+			$this->assertStringContainsString( 'href="/section"', $html );
+			$this->assertStringNotContainsString( 'href=""', $html );
+		}
+	}
+
 	public function test_preview_keeps_quality_annotations_out_of_html(): void {
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Save controlled request state for restoration; this preview test performs no protected mutation.
 		$previous_query = $_GET;

@@ -47,12 +47,14 @@ body.admin-bar .ran-admin-shell {
 	box-sizing: border-box;
 }
 
-/* Consumers with unusually tall headers can override this for anchor targets. */
+/* Allow for the mobile admin bar, shell and a classic horizontal scrollbar.
+ * Consumers with unusually tall headers can override this for anchor targets.
+ */
 .ran-admin-shell ~ * :target,
 .ran-admin-shell ~ :target,
 .ran-admin-shell ~ * :focus,
 .ran-admin-shell ~ :focus {
-	scroll-margin-block-start: var(--ran-admin-shell-scroll-margin, 160px);
+	scroll-margin-block-start: var(--ran-admin-shell-scroll-margin, 192px);
 }
 
 .ran-admin-shell__background {
@@ -133,6 +135,14 @@ body.admin-bar .ran-admin-shell {
 	flex: 0 0 auto;
 	flex-wrap: wrap;
 	gap: 8px;
+	max-inline-size: 100%;
+	min-inline-size: 0;
+}
+
+.ran-admin-shell__actions > a {
+	max-inline-size: 100%;
+	overflow-wrap: anywhere;
+	white-space: normal;
 }
 
 .ran-admin-shell--name-only .ran-admin-shell__identity,

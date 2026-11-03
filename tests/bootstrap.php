@@ -32,6 +32,10 @@ if ( ! function_exists( 'esc_url' ) ) {
 	 */
 	function esc_url( $value ) {
 		$value = filter_var( (string) $value, FILTER_SANITIZE_URL );
+		// Model WordPress rejection of the blocked schemes exercised by the renderer tests.
+		if ( preg_match( '/^(?:javascript|data):/i', (string) $value ) ) {
+			return '';
+		}
 		return esc_attr( (string) $value );
 	}
 }
