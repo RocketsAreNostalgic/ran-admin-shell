@@ -19,6 +19,44 @@ final class RenderContractTest extends TestCase {
 		$this->assertStringNotContainsString( '__version', $html );
 	}
 
+	/** A home destination makes the complete identity one native link. */
+	public function test_home_url_links_the_identity_and_keeps_actions_separate(): void {
+		$args = array(
+			'name'      => 'Example',
+			'home_url'  => '/home?one=1&two=2',
+			'strapline' => 'Publisher',
+			'version'   => '1.2.3',
+			'logo'      => array(
+				'url'    => '/logo.svg',
+				'width'  => 32,
+				'height' => 32,
+			),
+			'actions'   => array(
+				array(
+					'label' => 'Support',
+					'url'   => '/support',
+				),
+			),
+		);
+		$html = $this->render( $args );
+		if ( 1 !== preg_match( '~<a class="ran-admin-shell__identity" href="([^"]+)">(.*?)</a>~s', $html, $link ) ) {
+			$this->fail( 'Expected a single home link wrapping the identity.' );
+		}
+		$this->assertSame( '/home?one=1&amp;two=2', $link[1] );
+		$this->assertStringContainsString( 'class="ran-admin-shell__logo"', $link[2] );
+		$this->assertStringContainsString( '<h1 class="ran-admin-shell__title">Example</h1>', $link[2] );
+		$this->assertStringContainsString( '>Publisher</p>', $link[2] );
+		$this->assertStringContainsString( '>1.2.3</span>', $link[2] );
+		$this->assertStringNotContainsString( '<a ', $link[2] );
+		$this->assertSame( 2, substr_count( $html, '<a ' ) );
+		foreach ( array( '', 'javascript:alert(1)' ) as $url ) {
+			$args['home_url'] = $url;
+			$html             = $this->render( $args );
+			$this->assertStringContainsString( '<div class="ran-admin-shell__identity">', $html );
+			$this->assertSame( 1, substr_count( $html, '<a ' ) );
+		}
+	}
+
 	/** Only the exact inverse option changes the default shell. */
 	public function test_color_scheme_requires_exact_inverse(): void {
 		$default = $this->render( array( 'name' => 'Example' ) );
