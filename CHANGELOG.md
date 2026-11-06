@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.0.1](https://github.com/RocketsAreNostalgic/ran-admin-shell/compare/v2.0.0...v2.0.1) (2026-11-06)
+
+
+### Bug Fixes
+
+* link the complete product identity to its home ([#39](https://github.com/RocketsAreNostalgic/ran-admin-shell/issues/39)) ([4b3142f](https://github.com/RocketsAreNostalgic/ran-admin-shell/commit/4b3142f6bb93464e15544d8767b8357a3a08392d))
+* preserve navigation focus indication ([#41](https://github.com/RocketsAreNostalgic/ran-admin-shell/issues/41)) ([aed6641](https://github.com/RocketsAreNostalgic/ran-admin-shell/commit/aed6641e388f21b79550915a8482171ffae2c659))
+
 ## [2.0.0](https://github.com/RocketsAreNostalgic/ran-admin-shell/compare/v1.0.0...v2.0.0) (2026-11-03)
 
 
