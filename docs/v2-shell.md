@@ -10,6 +10,9 @@ the shell without replacing destination links with tab widgets.
 
 Only `name` is required. The existing `strapline` supplies the optional publisher
 line; logo, version, actions and decorative background remain independent.
+When `home_url` supplies a usable destination, one native link wraps the
+identity, including its heading, optional logo, strapline and version. Actions
+and section links remain separate. An absent or blocked URL leaves plain text.
 
 ```php
 $ran_admin_shell = array(
