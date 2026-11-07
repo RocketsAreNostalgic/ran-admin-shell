@@ -1,5 +1,18 @@
 # Changelog
 
+## [2.1.0](https://github.com/RocketsAreNostalgic/ran-admin-shell/compare/v2.0.0...v2.1.0) (2026-11-07)
+
+
+### Features
+
+* share thick and thin section navigation ([#44](https://github.com/RocketsAreNostalgic/ran-admin-shell/issues/44)) ([fb8d723](https://github.com/RocketsAreNostalgic/ran-admin-shell/commit/fb8d7233c5b4acbed0889684281277c8fe6ab547))
+
+
+### Bug Fixes
+
+* link the complete product identity to its home ([#39](https://github.com/RocketsAreNostalgic/ran-admin-shell/issues/39)) ([4b3142f](https://github.com/RocketsAreNostalgic/ran-admin-shell/commit/4b3142f6bb93464e15544d8767b8357a3a08392d))
+* preserve navigation focus indication ([#41](https://github.com/RocketsAreNostalgic/ran-admin-shell/issues/41)) ([aed6641](https://github.com/RocketsAreNostalgic/ran-admin-shell/commit/aed6641e388f21b79550915a8482171ffae2c659))
+
 ## [2.0.0](https://github.com/RocketsAreNostalgic/ran-admin-shell/compare/v1.0.0...v2.0.0) (2026-11-03)
 
 
