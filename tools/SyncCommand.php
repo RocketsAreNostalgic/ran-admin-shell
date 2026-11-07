@@ -52,7 +52,7 @@ final class SyncCommand {
 	/**
 	 * Copy canonical resources and write provenance.
 	 *
-	 * @param array{php:string,css:string,provenance:string,root:string} $config Validated configuration.
+	 * @param array{php:string,css:string,provenance:string,root:string,section_navigation?:string} $config Validated configuration.
 	 * @return void
 	 */
 	public static function sync( array $config ) {
@@ -74,7 +74,7 @@ final class SyncCommand {
 	/**
 	 * Check canonical bytes and provenance without changing the consumer.
 	 *
-	 * @param array{php:string,css:string,provenance:string,root:string} $config Validated configuration.
+	 * @param array{php:string,css:string,provenance:string,root:string,section_navigation?:string} $config Validated configuration.
 	 * @param bool  $immutable Require an immutable VCS lock reference.
 	 * @return bool
 	 */
@@ -144,7 +144,7 @@ final class SyncCommand {
 	 * Load and validate a consumer configuration.
 	 *
 	 * @param mixed $config_path Configuration path, converted to a string.
-	 * @return array{php:string,css:string,provenance:string,root:string}
+	 * @return array{php:string,css:string,provenance:string,root:string,section_navigation?:string}
 	 */
 	public static function load_configuration( $config_path ) {
 		$config_path = (string) $config_path;
@@ -172,7 +172,28 @@ final class SyncCommand {
 			$paths[ $key ] = self::safe_destination( $root, $data[ $key ] );
 		}
 
-		if ( 3 !== count( array_unique( $paths ) ) ) {
+		if ( array_key_exists( 'section_navigation', $data ) ) {
+			if ( ! is_string( $data['section_navigation'] ) ) {
+				throw new \RuntimeException( 'Configuration section_navigation must be a string.' );
+			}
+			$paths['section_navigation'] = self::safe_destination( $root, $data['section_navigation'] );
+		}
+
+		$collision_paths = array_map(
+			static function ( $path ) {
+				return implode(
+					'/',
+					array_filter(
+						explode( '/', $path ),
+						static function ( $part ) {
+							return '' !== $part && '.' !== $part;
+						}
+					)
+				);
+			},
+			$paths
+		);
+		if ( count( $collision_paths ) !== count( array_unique( $collision_paths ) ) ) {
 			throw new \RuntimeException( 'Resource destinations must be unique.' );
 		}
 
@@ -213,21 +234,25 @@ final class SyncCommand {
 	/**
 	 * Return destination-to-source mapping.
 	 *
-	 * @param array{php:string,css:string,provenance:string,root:string} $config Validated configuration.
+	 * @param array{php:string,css:string,provenance:string,root:string,section_navigation?:string} $config Validated configuration.
 	 * @return array<string, string>
 	 */
 	private static function resources( array $config ) {
 		$package_root = dirname( __DIR__ );
-		return array(
+		$resources    = array(
 			$config['php'] => $package_root . '/resources/admin-shell.php',
 			$config['css'] => $package_root . '/resources/admin-shell.css',
 		);
+		if ( isset( $config['section_navigation'] ) ) {
+			$resources[ $config['section_navigation'] ] = $package_root . '/resources/section-navigation.js';
+		}
+		return $resources;
 	}
 
 	/**
 	 * Build deterministic provenance.
 	 *
-	 * @param array{php:string,css:string,provenance:string,root:string} $config Validated configuration.
+	 * @param array{php:string,css:string,provenance:string,root:string,section_navigation?:string} $config Validated configuration.
 	 * @param array<string, string> $resources Destination-to-source mapping.
 	 * @return array{schema:int,package:string,version:string,reference:string,files:array<string,string>}
 	 */

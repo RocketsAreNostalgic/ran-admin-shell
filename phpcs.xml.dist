@@ -2,6 +2,7 @@
 <ruleset name="RAN Admin Shell">
 	<description>WordPress coding standards and PHP 8.0 compatibility.</description>
 	<file>resources</file>
+	<arg name="extensions" value="php"/>
 	<exclude-pattern>vendor/*</exclude-pattern>
 	<arg name="basepath" value="."/>
 	<arg name="colors"/>

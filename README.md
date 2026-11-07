@@ -24,6 +24,8 @@ vendor/bin/ran-admin-shell sync --config=ran-admin-shell.json
 vendor/bin/ran-admin-shell check --config=ran-admin-shell.json --immutable
 ```
 
+To opt in to the section navigation script, add `"section_navigation": "assets/section-navigation.js"` to the configuration. The destination must be a safe, unique relative path. Sync copies the script and records it in provenance; check detects drift. Without this key, only the existing PHP and CSS resources are exported. The ES module exports `createSectionNavigation(host)` for an opted-in `.ran-section-navigation` track. The controller exposes `update({ animate, afterPaint })`, `snapshot()`, `transfer(previous)`, and `destroy()`; consumers retain native links and current-page state. `afterPaint` retains the previous endpoint through a layout move before animating. A consumer may pass the opaque `snapshot()` into a replacement controller’s `transfer()` after an accepted server update; the controller owns the decorative indicator without replacing the native links.
+
 The package and `vendor/` stay out of installed WordPress sites.
 
 For a full-width admin header, render the synchronized shell before the
