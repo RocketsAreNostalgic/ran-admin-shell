@@ -4,6 +4,44 @@
 use PHPUnit\Framework\TestCase;
 
 final class RenderContractTest extends TestCase {
+	/** Section variants are exact opt-ins and never change breadcrumb output. */
+	public function test_navigation_variant_is_opt_in(): void {
+		$args   = array(
+			'name'       => 'Example',
+			'navigation' => array(
+				array(
+					'label'   => 'One',
+					'url'     => '/one',
+					'current' => true,
+				),
+				array(
+					'label'   => 'Two',
+					'url'     => '/two',
+					'current' => true,
+				),
+			),
+		);
+		$legacy = $this->render( $args );
+		foreach ( array( '', 'Thick', ' thick ', 'other', null, false, array() ) as $invalid ) {
+			$args['navigation_variant'] = $invalid;
+			$this->assertSame( $legacy, $this->render( $args ) );
+		}
+		foreach ( array( 'thick', 'thin' ) as $variant ) {
+			$args['navigation_variant'] = $variant;
+			$html                       = $this->render( $args );
+			$this->assertStringContainsString( 'ran-section-navigation ran-section-navigation--' . $variant, $html );
+			$this->assertSame( 2, substr_count( $html, 'class="ran-section-navigation__link"' ) );
+			$this->assertSame( 1, substr_count( $html, 'aria-current="page"' ) );
+			$this->assertSame( 1, substr_count( $html, '<span class="ran-section-navigation__indicator" aria-hidden="true"></span>' ) );
+			$this->assertSame( $legacy, str_replace( array( ' ran-section-navigation ran-section-navigation--' . $variant, ' class="ran-section-navigation__link"', '<span class="ran-section-navigation__indicator" aria-hidden="true"></span>' ), '', $html ) );
+			$args['breadcrumbs'] = array( array( 'label' => 'Current' ) );
+			$this->assertStringNotContainsString( 'ran-section-navigation', $this->render( $args ) );
+			unset( $args['breadcrumbs'] );
+		}
+		$args['navigation'] = array();
+		$this->assertStringNotContainsString( 'ran-section-navigation', $this->render( $args ) );
+	}
+
 	/** Name-only is a complete shell with no reserved optional regions. */
 	public function test_name_only_has_one_heading_and_no_optional_markup(): void {
 		$html = $this->render( array( 'name' => 'RAN Example' ) );

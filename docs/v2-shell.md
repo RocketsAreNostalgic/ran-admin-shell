@@ -29,6 +29,16 @@ Use `navigation` for peer page destinations. The selected link is underlined
 and has `aria-current="page"`; links retain their URLs and ordinary browser
 navigation. These are not ARIA tabs.
 
+An optional `navigation_variant` of exactly `thick` or `thin` opts peer
+navigation into the shared static section-navigation styling. Absent or invalid
+values preserve the existing markup and styling; breadcrumbs take precedence.
+For standalone navigation, consumers can apply `ran-section-navigation` and
+`ran-section-navigation--thick` or `ran-section-navigation--thin` to a labelled
+`nav`, and `ran-section-navigation__link` to its destination anchors. Set
+`aria-current="page"` on at most one link. The 3px and 2px current borders use
+the shell indicator token when inherited, otherwise `currentColor`. Consumers
+own link layout, focus, permissions, URLs and current state. No script is needed.
+
 For a hierarchical page, provide `breadcrumbs` instead:
 
 ```php

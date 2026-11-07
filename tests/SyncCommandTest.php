@@ -78,6 +78,67 @@ final class SyncCommandTest extends TestCase {
 		$this->assertFalse( SyncCommand::check( $config, false ) );
 	}
 
+	/** The optional script participates in sync, provenance and drift checks. */
+	public function test_optional_section_navigation_export_and_drift(): void {
+		$this->write_optional_configuration( 'assets/section-navigation.js' );
+		$config      = $this->load_configuration();
+		$destination = $config['root'] . '/assets/section-navigation.js';
+		$this->assertSame( $destination, $config['section_navigation'] ?? null );
+		SyncCommand::sync( $config );
+		$this->assertSame( hash_file( 'sha256', dirname( __DIR__ ) . '/resources/section-navigation.js' ), hash_file( 'sha256', $destination ) );
+		$this->assertTrue( SyncCommand::check( $config ) );
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Inspect exact owned provenance bytes.
+		$provenance = json_decode( (string) file_get_contents( $config['provenance'] ), true );
+		$this->assertArrayHasKey( 'assets/section-navigation.js', $provenance['files'] );
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Change the owned fixture to exercise drift detection.
+		file_put_contents( $destination, 'drift', FILE_APPEND );
+		$this->assertFalse( SyncCommand::check( $config ) );
+	}
+
+	/** Legacy configuration emits exactly the two original resources. */
+	public function test_absent_optional_export_preserves_two_resource_provenance(): void {
+		$config = $this->load_configuration();
+		SyncCommand::sync( $config );
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Inspect exact owned provenance bytes.
+		$provenance = json_decode( (string) file_get_contents( $config['provenance'] ), true );
+		$this->assertCount( 2, $provenance['files'] );
+		$this->assertFileDoesNotExist( $this->root . '/assets/section-navigation.js' );
+		$this->assertTrue( SyncCommand::check( $config ) );
+	}
+
+	/** Optional destinations obey the same validation and collision fences. */
+	public function test_optional_destination_rejects_unsafe_values(): void {
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_symlink -- Create a link inside the owned fixture to exercise the destination fence.
+		symlink( $this->root . '/outside', $this->root . '/linked' );
+		foreach ( array( null, array(), '', '../outside.js', 'assets/./ran-admin-shell.css', 'linked/navigation.js' ) as $value ) {
+			$this->write_optional_configuration( $value );
+			try {
+				$this->load_configuration();
+				$this->fail( 'Unsafe optional destination was accepted.' );
+			} catch ( RuntimeException $error ) {
+				$this->assertNotSame( '', $error->getMessage() );
+			}
+		}
+	}
+
+	/** @param mixed $value Optional destination fixture. */
+	private function write_optional_configuration( $value ): void {
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Write the owned isolated configuration fixture.
+		file_put_contents(
+			$this->root . '/ran-admin-shell.json',
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.json_encode_json_encode -- Native JSON writes the standalone configuration fixture.
+			json_encode(
+				array(
+					'schema'             => 1,
+					'php'                => 'includes/generated/ran-admin-shell.php',
+					'css'                => 'assets/ran-admin-shell.css',
+					'provenance'         => 'includes/generated/ran-admin-shell.provenance.json',
+					'section_navigation' => $value,
+				)
+			)
+		);
+	}
+
 	/** Immutable mode requires matching Composer installed metadata. */
 	public function test_immutable_check_rejects_missing_installed_metadata(): void {
 		$config = $this->load_configuration();
@@ -159,7 +220,7 @@ final class SyncCommandTest extends TestCase {
 		}
 	}
 
-	/** @return array{php:string,css:string,provenance:string,root:string} */
+	/** @return array{php:string,css:string,provenance:string,root:string,section_navigation?:string} */
 	private function load_configuration() {
 		return SyncCommand::load_configuration( $this->root . '/ran-admin-shell.json' );
 	}
