@@ -35,9 +35,13 @@ values preserve the existing markup and styling; breadcrumbs take precedence.
 For standalone navigation, consumers can apply `ran-section-navigation` and
 `ran-section-navigation--thick` or `ran-section-navigation--thin` to a labelled
 `nav`, and `ran-section-navigation__link` to its destination anchors. Set
-`aria-current="page"` on at most one link. The 3px and 2px current borders use
-the shell indicator token when inherited, otherwise `currentColor`. Consumers
-own link layout, focus, permissions, URLs and current state. No script is needed.
+`aria-current="page"` on at most one link. Both profiles use a 2px current
+border: the inherited Shell indicator token, otherwise the WordPress admin theme
+colour (`--wp-admin-theme-color`, falling back to `#3858e9`). Consumers own
+labels, permissions, URLs and authoritative current state. Static styles need no
+script; the optional controller supplies shared motion and focus scrolling.
+Cross-document transitions activate only for a rendered opted-in header, not
+merely because a consumer loads the Shell stylesheet.
 
 For a hierarchical page, provide `breadcrumbs` instead:
 

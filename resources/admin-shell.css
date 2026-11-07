@@ -372,15 +372,6 @@ body.admin-bar .ran-admin-shell {
 		view-transition-name: ran-section-header-indicator;
 	}
 
-	@view-transition {
-		navigation: auto;
-	}
-
-	::view-transition-old(root),
-	::view-transition-new(root) {
-		animation: none;
-	}
-
 	::view-transition-group(ran-section-header-indicator) {
 		animation-duration: 180ms;
 		animation-timing-function: ease-out;

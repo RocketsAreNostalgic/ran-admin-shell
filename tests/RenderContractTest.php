@@ -33,13 +33,17 @@ final class RenderContractTest extends TestCase {
 			$this->assertSame( 2, substr_count( $html, 'class="ran-section-navigation__link"' ) );
 			$this->assertSame( 1, substr_count( $html, 'aria-current="page"' ) );
 			$this->assertSame( 1, substr_count( $html, '<span class="ran-section-navigation__indicator" aria-hidden="true"></span>' ) );
+			$this->assertStringContainsString( '@view-transition{navigation:auto}', $html );
+			$html = (string) preg_replace( '/<style>.*?<\/style>/s', '', $html );
 			$this->assertSame( $legacy, str_replace( array( ' ran-section-navigation ran-section-navigation--' . $variant, ' class="ran-section-navigation__link"', '<span class="ran-section-navigation__indicator" aria-hidden="true"></span>' ), '', $html ) );
 			$args['breadcrumbs'] = array( array( 'label' => 'Current' ) );
 			$this->assertStringNotContainsString( 'ran-section-navigation', $this->render( $args ) );
+			$this->assertStringNotContainsString( '@view-transition', $this->render( $args ) );
 			unset( $args['breadcrumbs'] );
 		}
 		$args['navigation'] = array();
 		$this->assertStringNotContainsString( 'ran-section-navigation', $this->render( $args ) );
+		$this->assertStringNotContainsString( '@view-transition', $this->render( $args ) );
 	}
 
 	/** Name-only is a complete shell with no reserved optional regions. */
