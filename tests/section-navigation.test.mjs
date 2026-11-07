@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { createSectionNavigation } from '../resources/section-navigation.js';
 
-function fixture() {
+function fixture({ nested = false } = {}) {
 	let current = 0;
 	let nextFrame = 0;
 	let resized;
@@ -11,14 +11,29 @@ function fixture() {
 		styles = new Map(),
 		classes = new Set(),
 		events = new Map();
-	const links = [30, 90, 160].map((left, index) => ({
-		getAttribute: () => (index === current ? 'page' : null),
-		left,
-		getBoundingClientRect: () => ({ left, bottom: 66, width: 50 }),
-		scrollIntoView(options) {
-			this.scrolled = options;
+	const observed = new Set();
+	const makeLinks = () =>
+		[30, 90, 160].map((left, index) => ({
+			getAttribute: () => (index === current ? 'page' : null),
+			left,
+			width: 50,
+			getBoundingClientRect() {
+				return { left, bottom: 66, width: this.width };
+			},
+			scrollIntoView(options) {
+				this.scrolled = options;
+			},
+		}));
+	let links = makeLinks();
+	const nestedIndicator = { parentNode: links[0] };
+	const makeIndicator = () => ({
+		setAttribute() {},
+		getBoundingClientRect: () => ({ left: 30, top: 64, width: 50 }),
+		remove() {
+			if (directIndicator === this) directIndicator = null;
 		},
-	}));
+	});
+	let directIndicator = nested ? null : makeIndicator();
 	const view = {
 		getComputedStyle: () => ({ getPropertyValue: () => '2px' }),
 		requestAnimationFrame(callback) {
@@ -32,24 +47,36 @@ function fixture() {
 			constructor(callback) {
 				resized = callback;
 			}
-			observe() {}
+			observe(target) {
+				observed.add(target);
+			}
+			unobserve(target) {
+				observed.delete(target);
+			}
 			disconnect() {
 				disconnected = true;
+				observed.clear();
 			}
 		},
 	};
 	const host = {
 		matches: () => true,
-		ownerDocument: { defaultView: view },
+		ownerDocument: { defaultView: view, createElement: makeIndicator },
+		appendChild(child) {
+			directIndicator = child;
+		},
 		isConnected: true,
 		scrollLeft: 4,
 		scrollTop: 0,
 		clientLeft: 1,
 		clientTop: 0,
 		querySelectorAll: () => links,
-		querySelector: () => ({
-			getBoundingClientRect: () => ({ left: 30, top: 64, width: 50 }),
-		}),
+		querySelector: (selector) =>
+			selector.startsWith(':scope >')
+				? directIndicator
+				: nested
+					? nestedIndicator
+					: directIndicator,
 		getBoundingClientRect: () => ({ left: 10, top: 30 }),
 		addEventListener: (name, listener) => events.set(name, listener),
 		removeEventListener: (name) => events.delete(name),
@@ -66,7 +93,18 @@ function fixture() {
 	};
 	return {
 		host,
-		links,
+		get links() {
+			return links;
+		},
+		observed,
+		nestedIndicator,
+		get directIndicator() {
+			return directIndicator;
+		},
+		replaceLinks() {
+			links = makeLinks();
+			directIndicator = null;
+		},
 		styles,
 		classes,
 		events,
@@ -74,8 +112,8 @@ function fixture() {
 		select(index) {
 			current = index;
 		},
-		resize() {
-			resized();
+		resize(target = host) {
+			if (observed.has(target)) resized();
 		},
 		paint() {
 			const pending = [...frames.values()];
@@ -159,4 +197,43 @@ test('opaque handoff retains rendered position across a new host before animatin
 	next.paint();
 	assert.equal(next.styles.get('--ran-section-indicator-x'), '143px');
 	assert.equal(next.classes.has('ran-section-navigation--moving'), true);
+});
+
+test('PHP nested fallback remains owned by its link while enhancement uses the host', () => {
+	const f = fixture({ nested: true });
+	const parent = f.nestedIndicator.parentNode;
+	const controller = createSectionNavigation(f.host);
+	assert.ok(
+		f.directIndicator,
+		'enhanced indicator must be a direct host child'
+	);
+	assert.equal(f.nestedIndicator.parentNode, parent);
+	f.select(1);
+	controller.update();
+	assert.equal(f.styles.get('--ran-section-indicator-x'), '83px');
+	controller.destroy();
+	assert.equal(f.directIndicator, null);
+	assert.equal(f.nestedIndicator.parentNode, parent);
+});
+
+test('committed link replacements reconcile resize targets and recreate the host indicator', () => {
+	const f = fixture();
+	const controller = createSectionNavigation(f.host);
+	const old = [...f.links];
+	f.replaceLinks();
+	f.select(1);
+	controller.update({ animate: true, afterPaint: true });
+	old.forEach((link) => assert.equal(f.observed.has(link), false));
+	f.links.forEach((link) => assert.equal(f.observed.has(link), true));
+	assert.ok(
+		f.directIndicator,
+		'replacement content must retain an enhanced indicator'
+	);
+	f.paint();
+	f.paint();
+	f.links[1].width = 95;
+	f.resize(f.links[1]);
+	assert.equal(f.styles.get('--ran-section-indicator-width'), '95px');
+	controller.destroy();
+	assert.equal(f.observed.size, 0);
 });
