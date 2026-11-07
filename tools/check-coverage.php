@@ -65,6 +65,7 @@ try {
 			$value = $argument->getAttribute( 'value' );
 			if ( ( 'basepath' === $name && '.' === $value ) || ( 'colors' === $name && '' === $value )
 				|| ( '' === $name && 'sp' === $value )
+				|| ( 'phpcs.xml.dist' === $ruleset && 'extensions' === $name && 'php' === $value )
 				|| ( 'phpcs-tooling.xml.dist' === $ruleset && 'filter' === $name && 'tools/StandardsFilter.php' === $value ) ) {
 				continue;
 			}

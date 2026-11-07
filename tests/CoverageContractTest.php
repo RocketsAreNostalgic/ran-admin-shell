@@ -48,6 +48,24 @@ final class CoverageContractTest extends TestCase {
 		$this->assertSame( 0, $status, $output );
 	}
 
+	public function test_resource_php_extension_filter_is_exact(): void {
+		$path = $this->root . '/phpcs.xml.dist';
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Read only the owned coverage configuration fixture.
+		$xml = file_get_contents( $path );
+		if ( false === $xml ) {
+			throw new RuntimeException( 'Coverage fixture configuration is missing.' );
+		}
+		foreach ( array(
+			'php'    => 0,
+			'php,js' => 1,
+		) as $extensions => $expected ) {
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Exercise the exact language selector in the owned configuration fixture.
+			file_put_contents( $path, str_replace( '<file>resources</file>', '<file>resources</file><arg name="extensions" value="' . $extensions . '"/>', $xml ) );
+			list( $status, $output ) = $this->check_coverage();
+			$this->assertSame( $expected, $status, $output );
+		}
+	}
+
 	public function test_new_source_and_narrowed_analysis_fail(): void {
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Write exact bytes to the owned native temporary/fixture path; preserve filesystem and distribution observations.
 		file_put_contents( $this->root . '/NewSource.php', '<?php return 3;' );
