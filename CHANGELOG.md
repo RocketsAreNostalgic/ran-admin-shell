@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.1.1](https://github.com/RocketsAreNostalgic/ran-admin-shell/compare/v2.1.0...v2.1.1) (2026-11-08)
+
+
+### Bug Fixes
+
+* equalize Shell navigation and breadcrumb height ([#45](https://github.com/RocketsAreNostalgic/ran-admin-shell/issues/45)) ([ae603c8](https://github.com/RocketsAreNostalgic/ran-admin-shell/commit/ae603c8a6946a2c19a2d2f8f8ab0b73cc5601c4f))
+
 ## [2.1.0](https://github.com/RocketsAreNostalgic/ran-admin-shell/compare/v2.0.0...v2.1.0) (2026-11-07)
 
 
